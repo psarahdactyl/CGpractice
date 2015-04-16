@@ -4,5 +4,5 @@ OPTIONS=$(GCC_OPTIONS) $(GL_OPTIONS)
 
 
 .cpp: 
-	g++ Shape.cpp $@.cpp Common/InitShader.o $(OPTIONS) -o $@  
+	g++ Triangle.cpp Circle.cpp Shape.cpp $@.cpp Common/InitShader.o $(OPTIONS) -o $@  
 
