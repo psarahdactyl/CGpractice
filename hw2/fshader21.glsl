@@ -1,6 +1,8 @@
+in vec4 vPosition, vColor;
+out vec4 color;
 
-void
-main()
+void main()
 {
-    gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+    gl_Position = vPosition;
+	color = vColor;
 }

@@ -14,6 +14,7 @@ class Shape
 		int numPoints;
 		GLenum mode;
 		static vector<vec2> coords;
+		static vector<vec4> colors;
 		Shape(GLfloat x, GLfloat y, GLfloat r, GLenum mode); 
 };
 

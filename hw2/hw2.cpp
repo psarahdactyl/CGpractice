@@ -12,7 +12,12 @@
 
 using namespace std;
 
-Shape *shapes[3];
+Shape *shapes[9];
+static vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
+static vec4 green = vec4(0.0, 1.0, 0.0, 1.0);
+static vec4 blue = vec4(0.0, 0.0, 1.0, 1.0);
+static vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
+static vec4 black = vec4(0.0, 0.0, 0.0, 1.0);
 
 //--------------------------------------------------------------------------
 
@@ -20,34 +25,60 @@ void
 init( void )
 {
 	// Initialization
-	GLuint vao, buffer, program, location;
+	GLuint vao, buffer, program, location1, location2;
 
 	// Create a vertex array object
 	glGenVertexArrays( 1, &vao );
     glBindVertexArray( vao );
   
 	// Create shapes	
-	shapes[0] = new Circle(0.5, 0.5, .2, GL_TRIANGLE_FAN);
-	shapes[1] = new Triangle(0.0, 0.8, .2, GL_TRIANGLES);
-	shapes[2] = new Square(0.0, -0.25, .2, GL_TRIANGLES);
+	shapes[0] = new Circle(0.6, 0.7, 0.15, GL_POINTS);
+	shapes[1] = new Circle(-0.6, 0.7, 1.0, 0.6, 0.15, GL_POINTS);
+	shapes[2] = new Triangle(0.0, 0.8, 0.2, GL_TRIANGLES);
+	shapes[3] = new Square(0.0, -0.3, 0.6, GL_TRIANGLE_STRIP, white);
+	shapes[4] = new Square(0.0, -0.3, 0.5, GL_TRIANGLE_STRIP, black);
+	shapes[5] = new Square(0.0, -0.3, 0.4, GL_TRIANGLE_STRIP, white);
+	shapes[6] = new Square(0.0, -0.3, 0.3, GL_TRIANGLE_STRIP, black);
+	shapes[7] = new Square(0.0, -0.3, 0.2, GL_TRIANGLE_STRIP, white);
+	shapes[8] = new Square(0.0, -0.3, 0.1, GL_TRIANGLE_STRIP, black);
 
+	cout << Shape::coords.size() << endl;
 
     // Create and initialize a buffer object
     glGenBuffers( 1, &buffer );
     glBindBuffer( GL_ARRAY_BUFFER, buffer );
 
+	// Copy the static vectors into arrays for the buffer
 	vec2 *points = &Shape::coords[0];
+	vec4 *cols = &Shape::colors[0];
 
-    glBufferData( GL_ARRAY_BUFFER, (Shape::coords.size() * sizeof(Shape::coords[0])), points, GL_STATIC_DRAW );
+	// Load array into buffer
+    glBufferData( GL_ARRAY_BUFFER, 
+					(Shape::coords.size() * sizeof(Shape::coords[0])) + (Shape::colors.size() * sizeof(Shape::colors[0])), 
+					NULL, 
+					GL_STATIC_DRAW );
+	glBufferSubData(GL_ARRAY_BUFFER, 
+					0,
+					Shape::coords.size() * sizeof(Shape::coords[0]), 
+					points ); 
+	glBufferSubData(GL_ARRAY_BUFFER, 
+					Shape::coords.size() * sizeof(Shape::coords[0]), 
+					Shape::colors.size() * sizeof(Shape::colors[0]), 
+					cols ); 
 
     // Load shaders and use the resulting shader program
     program = InitShader( "vshader21.glsl", "fshader21.glsl" );
-	location = glGetAttribLocation( program, "vPosition" );
 	glUseProgram( program );
 
     // Initialize the vertex position attribute from the vertex shader
-    glEnableVertexAttribArray( location );
-    glVertexAttribPointer( location, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+	location1 = glGetAttribLocation( program, "vPosition" );
+    glEnableVertexAttribArray( location1 );
+    glVertexAttribPointer( location1, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+
+    // Initialize the fragment color attribute from the fragment shader
+	location2 = glGetAttribLocation( program, "vColor" );
+    glEnableVertexAttribArray( location2 );
+    glVertexAttribPointer( location2, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
 
     glClearColor( 0.0, 0.0, 0.0, 1.0 ); // white background
 }
@@ -60,10 +91,10 @@ display( void )
     glClear( GL_COLOR_BUFFER_BIT );     // clear the window
 
 	int start = 0;
-	for(int i = 0; i < 2; i++)
+	for(int i = 0; i < 9; i++)
 	{
     	glDrawArrays( shapes[i]->mode, start, start + shapes[i]->numPoints - 1);  // draw the points
-		//cout << "start: " << start << "  end: " << start + shapes[i]->numPoints - 1 << endl;
+		cout << "start: " << start << "  end: " << start + shapes[i]->numPoints - 1 << endl;
 		start += shapes[i]->numPoints;
 	}
 

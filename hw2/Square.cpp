@@ -3,11 +3,15 @@
 
 using namespace std;
 
-Square::Square(GLfloat x, GLfloat y, GLfloat r, GLenum mode): Shape(x, y, r, mode)
+Square::Square(GLfloat x, GLfloat y, GLfloat r, GLenum mode, vec4 color): Shape(x, y, r, mode)
 {
 	this->numPoints = 4;
 	this->mode = mode;
 	this->genPoints(x, y, r);
+	for(int i = 0; i < 4; i++)
+	{
+		Shape::colors.push_back( color );
+	}
 }
 
 void Square::genPoints(GLfloat x, GLfloat y, GLfloat r) 
