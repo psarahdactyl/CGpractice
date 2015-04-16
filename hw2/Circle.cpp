@@ -7,7 +7,7 @@ Circle::Circle(GLfloat x, GLfloat y, GLfloat r, GLenum mode): Shape(x, y, r, mod
 {
 	this->numPoints = 1000;
 	this->mode = mode;
-	this->genPoints(x, y, r, n);
+	this->genPoints(x, y, r);
 }
 
 void Circle::genPoints(GLfloat x, GLfloat y, GLfloat r)

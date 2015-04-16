@@ -7,11 +7,12 @@
 #include "Shape.h"
 #include "Circle.h"
 #include "Triangle.h"
+#include "Square.h"
 #include <iostream>
 
 using namespace std;
 
-Shape *shapes[2];
+Shape *shapes[3];
 
 //--------------------------------------------------------------------------
 
@@ -26,8 +27,9 @@ init( void )
     glBindVertexArray( vao );
   
 	// Create shapes	
-	shapes[0] = new Circle(0.5, 0.5, .2, 1000.0, GL_TRIANGLE_FAN);
-	shapes[1] = new Triangle(-0.5, 0.0, .2, 3.0, GL_TRIANGLES);
+	shapes[0] = new Circle(0.5, 0.5, .2, GL_TRIANGLE_FAN);
+	shapes[1] = new Triangle(0.0, 0.8, .2, GL_TRIANGLES);
+	shapes[2] = new Square(0.0, -0.25, .2, GL_TRIANGLES);
 
 
     // Create and initialize a buffer object
@@ -35,11 +37,6 @@ init( void )
     glBindBuffer( GL_ARRAY_BUFFER, buffer );
 
 	vec2 *points = &Shape::coords[0];
-	for(unsigned int i = 0; i < Shape::coords.size(); i++)
-	{
-		cout << "coords:  " << Shape::coords[i] << endl;
-	}
-	cout << "coordinate indices go from 0 to " << Shape::coords.size() - 1 << endl; 
 
     glBufferData( GL_ARRAY_BUFFER, (Shape::coords.size() * sizeof(Shape::coords[0])), points, GL_STATIC_DRAW );
 
@@ -66,7 +63,7 @@ display( void )
 	for(int i = 0; i < 2; i++)
 	{
     	glDrawArrays( shapes[i]->mode, start, start + shapes[i]->numPoints - 1);  // draw the points
-		cout << "start: " << start << "  end: " << start + shapes[i]->numPoints - 1 << endl;
+		//cout << "start: " << start << "  end: " << start + shapes[i]->numPoints - 1 << endl;
 		start += shapes[i]->numPoints;
 	}
 
