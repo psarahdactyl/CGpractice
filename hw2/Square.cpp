@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Square::Square(GLfloat x, GLfloat y, GLfloat r, GLuint n, GLenum mode): Shape(x, y, r, n, mode)
+Square::Square(GLfloat x, GLfloat y, GLfloat r, GLenum mode): Shape(x, y, r, mode)
 {
 	this->numPoints = 4;
 	this->mode = mode;
