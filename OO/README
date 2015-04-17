@@ -1,0 +1,12 @@
+Sarah Kushner
+sak338@drexel.edu
+CS 432
+Assignment 2
+
+I developed and tested this in Ubuntu 14.04.
+
+I did not include the compiled file, just the source.
+Running "make other_shapes" will build the program.
+Then "./other_shapes" runs it, as you already know.
+
+The file is still called red_triangle.cpp for Makefile purposes, although it shows the other two shapes as well.
