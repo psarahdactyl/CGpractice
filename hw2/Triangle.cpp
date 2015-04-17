@@ -8,9 +8,9 @@ Triangle::Triangle(GLfloat x, GLfloat y, GLfloat r, GLenum mode): Shape(x, y, r,
 	this->numPoints = 3;
 	this->mode = mode;
 	this->genPoints(x, y, r);
-	Shape::colors.push_back( vec4(1.0, 0.0, 0.0) );
-	Shape::colors.push_back( vec4(0.0, 1.0, 0.0) );
-	Shape::colors.push_back( vec4(0.0, 0.0, 1.0) );
+	Shape::colors.push_back( vec4(1.0, 0.0, 0.0, 1.0) );
+	Shape::colors.push_back( vec4(0.0, 1.0, 0.0, 1.0) );
+	Shape::colors.push_back( vec4(0.0, 0.0, 1.0, 1.0) );
 }
 
 void Triangle::genPoints(GLfloat x, GLfloat y, GLfloat r) 

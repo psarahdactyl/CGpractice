@@ -1,7 +1,7 @@
 // Sarah Kushner
 // CS 432
 // Assignment 2
-// Recreates picture given on homework 2 page.
+// New picture!
 
 #include "Angel.h"
 #include "Shape.h"
@@ -12,12 +12,13 @@
 
 using namespace std;
 
-Shape *shapes[9];
+Shape *shapes[6];
 static vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
 static vec4 green = vec4(0.0, 1.0, 0.0, 1.0);
 static vec4 blue = vec4(0.0, 0.0, 1.0, 1.0);
 static vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
 static vec4 black = vec4(0.0, 0.0, 0.0, 1.0);
+static vec4 purple = vec4(0.5, 0.12, 0.67, 1.0);
 
 //--------------------------------------------------------------------------
 
@@ -32,15 +33,12 @@ init( void )
     glBindVertexArray( vao );
   
 	// Create shapes	
-	shapes[0] = new Square(0.0, -0.3, 0.6, GL_TRIANGLE_FAN, white);
-	shapes[1] = new Triangle(0.0, 0.8, 0.2, GL_TRIANGLES);
-	shapes[2] = new Circle(0.6, 0.7, 0.15, GL_TRIANGLE_FAN);
-	shapes[3] = new Circle(-0.6, 0.7, 1.0, 0.6, 0.15, GL_TRIANGLE_FAN);
-	shapes[4] = new Square(0.0, -0.3, 0.5, GL_TRIANGLE_FAN, black);
-	shapes[5] = new Square(0.0, -0.3, 0.4, GL_TRIANGLE_FAN, white);
-	shapes[6] = new Square(0.0, -0.3, 0.3, GL_TRIANGLE_FAN, black);
-	shapes[7] = new Square(0.0, -0.3, 0.2, GL_TRIANGLE_FAN, white);
-	shapes[8] = new Square(0.0, -0.3, 0.1, GL_TRIANGLE_FAN, black);
+	shapes[0] = new Square(0.0, -0.3, 0.6, GL_TRIANGLE_FAN, purple);
+	shapes[1] = new Triangle(0.0, 0.3, 0.7, GL_TRIANGLES);
+	shapes[2] = new Circle(0.25, -0.2, 1.0, 1.0, 0.15, GL_TRIANGLE_FAN);
+	shapes[3] = new Circle(-0.25, -0.2, 1.0, 1.0, 0.15, GL_TRIANGLE_FAN);
+	shapes[4] = new Square(0.0, -0.6, 0.15, GL_TRIANGLE_FAN, red);
+	shapes[5] = new Square(0.0, -0.45, 0.15, GL_TRIANGLE_FAN, red);
 
     // Create and initialize a buffer object
     glGenBuffers( 1, &buffer );
@@ -78,7 +76,7 @@ init( void )
     glEnableVertexAttribArray( location2 );
     glVertexAttribPointer( location2, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(Shape::coords.size() * sizeof(vec2)) );
 
-    glClearColor( 0.0, 0.0, 0.0, 1.0 ); // black background
+    glClearColor( 0.8, 0.98, 0.07, 1.0 ); // yellow background
 }
 
 //----------------------------------------------------------------------------
@@ -89,7 +87,7 @@ display( void )
     glClear( GL_COLOR_BUFFER_BIT );     // clear the window
 
 	int start = 0;
-	for(int i = 0; i < 9; i++)
+	for(int i = 0; i < 6; i++)
 	{
     	glDrawArrays( shapes[i]->mode, start, shapes[i]->numPoints);  // draw the points
 		cout << "start: " << start << "  end: " << start + shapes[i]->numPoints - 1 << endl;
@@ -120,7 +118,7 @@ main( int argc, char **argv )
     glutInitDisplayMode( GLUT_RGBA );
     glutInitWindowSize( 500, 500 );
 
-    glutCreateWindow( "Shapes, man." );
+    glutCreateWindow( "Tiny house." );
     glewExperimental=GL_TRUE; 
     glewInit();    
     init();

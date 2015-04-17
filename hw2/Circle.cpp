@@ -5,28 +5,32 @@ using namespace std;
 
 Circle::Circle(GLfloat x, GLfloat y, GLfloat r, GLenum mode): Shape(x, y, r, mode)
 {
-	this->numPoints = 1000;
+	this->numPoints = 300;
 	this->mode = mode;
 	this->scaleX = 1.0f;
 	this->scaleY = 1.0f;
 	this->genPoints(x, y, r);
-	for(int i = 0; i < 1000; i++)
+	long double inc = 1.0 / 300; // number to increment by
+	long double red_c = 0.0;
+	for(int i = 0; i < 300; i++)
 	{
-		Shape::colors.push_back( vec4(1.0, 0.0, 0.0, 1.0) );
+		Shape::colors.push_back( vec4(red_c, 0.0, 0.0, 1.0) );
+		red_c += inc;
 	}
 }
 
 Circle::Circle(GLfloat x, GLfloat y, float scaleX, float scaleY, GLfloat r, GLenum mode) : Shape(x, y, r, mode)
 {
-	this->numPoints = 1000;
+	this->numPoints = 300;
 	this->mode = mode;
 	this->scaleX = scaleX;
 	this->scaleY = scaleY;
 	this->genPoints(x, y, r);
-	for(float i = 1.0; i > 0.0; i--)
+	for(int i = 0; i < 300; i++)
 	{
-		Shape::colors.push_back( vec4(i, 0.0, 0.0, 1.0) );
+		Shape::colors.push_back( vec4(1.0, 0.0, 0.0, 1.0) );
 	}
+
 }
 
 void Circle::genPoints(GLfloat x, GLfloat y, GLfloat r)
