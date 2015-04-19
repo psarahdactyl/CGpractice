@@ -22,6 +22,7 @@ vec4 *cols;
 
 // Animation
 //static bool animated = true;
+static GLfloat currentAngleOfRotation = 0.0;
 
 // Basic Colors
 static vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
@@ -134,6 +135,10 @@ void init( vec4 bgColor )
 void displayMain( void )
 {
     glClear( GL_COLOR_BUFFER_BIT );     // clear the window
+
+	glMatrixMode( GL_MODELVIEW );
+	glLoadIdentity();
+	glRotatef( currentAngleOfRotation, 0.0, 0.0, 1.0 );
 
 	int start = 0;
 	for(int i = 0; i < 6; i++)
@@ -269,6 +274,33 @@ void colorMenu( int id )
 	glutPostRedisplay();
 }
 
+void mainMenu( int id )
+{
+	switch( id ) {
+		case 1: 
+			break;
+		case 2:
+			break;
+		case 3:
+			recolorShapes( white, 0, 3 );
+			recolorShapes( white, 8, 11 );
+			recolorShapes( white, 16, 19 );
+			break;
+		case 4:
+			recolorShapes( red, 0, 3 );
+			recolorShapes( red, 8, 11 );
+			recolorShapes( red, 16, 19 );
+			break;
+		case 5:
+			recolorShapes( green, 0, 3 );
+			recolorShapes( green, 8, 11 );
+			recolorShapes( green, 16, 19 );
+			break;
+	}
+
+	glutPostRedisplay();
+}
+
 //----------------------------------------------------------------------------
 
 int main( int argc, char **argv )
@@ -282,7 +314,18 @@ int main( int argc, char **argv )
 	// Main Window
     mainWin = glutCreateWindow( "Shapes, man." );
     glewExperimental=GL_TRUE; 
-    glewInit();    
+    glewInit(); 
+	int submenu = glutCreateMenu( mainMenu ); //submenu
+	glutAddMenuEntry( "White", 3 );
+	glutAddMenuEntry( "Red", 4 );
+	glutAddMenuEntry( "Green", 5 );
+
+	glutCreateMenu( mainMenu ); // Set up menu
+	glutAddMenuEntry ( "Stop Animation", 1 );
+	glutAddMenuEntry( "Start Animation", 2 );
+	glutAddSubMenu( "Square Colors", submenu ); // add submenu
+	glutAttachMenu( GLUT_RIGHT_BUTTON );
+
     init( black );
 
 	glutIdleFunc( idleMain );
@@ -301,7 +344,7 @@ int main( int argc, char **argv )
 	glutAddMenuEntry( "Yellow", 6 );
 	glutAddMenuEntry( "Purple", 7 );
 	glutAddMenuEntry( "Orange", 8 );
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	glutAttachMenu( GLUT_RIGHT_BUTTON );
     init( white );
 
 
@@ -313,7 +356,6 @@ int main( int argc, char **argv )
 
     glutDisplayFunc( displaySecond );
     glutKeyboardFunc( secondKeyboard );
-
 
 	// Run
     glutMainLoop();
