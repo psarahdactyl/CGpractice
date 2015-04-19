@@ -3,13 +3,19 @@
 
 using namespace std;
 
-Circle::Circle(GLfloat x, GLfloat y, GLfloat r, GLenum mode): Shape(x, y, r, mode)
+Circle::Circle(GLfloat x, GLfloat y, GLfloat r, GLenum mode, vec4 color): Shape(x, y, r, mode)
 {
 	this->numPoints = 300;
 	this->mode = mode;
 	this->scaleX = 1.0f;
 	this->scaleY = 1.0f;
 	this->genPoints(x, y, r);
+	for(int i = 0; i < 300; i++)
+	{
+		Shape::colors.push_back( color );
+	}
+
+	/*
 	long double inc = 1.0 / 300; // number to increment by
 	long double red_c = 0.0;
 	for(int i = 0; i < 300; i++)
@@ -17,9 +23,10 @@ Circle::Circle(GLfloat x, GLfloat y, GLfloat r, GLenum mode): Shape(x, y, r, mod
 		Shape::colors.push_back( vec4(red_c, 0.0, 0.0, 1.0) );
 		red_c += inc;
 	}
+	*/
 }
 
-Circle::Circle(GLfloat x, GLfloat y, float scaleX, float scaleY, GLfloat r, GLenum mode) : Shape(x, y, r, mode)
+Circle::Circle(GLfloat x, GLfloat y, float scaleX, float scaleY, GLfloat r, GLenum mode, vec4 color) : Shape(x, y, r, mode)
 {
 	this->numPoints = 300;
 	this->mode = mode;
@@ -28,7 +35,7 @@ Circle::Circle(GLfloat x, GLfloat y, float scaleX, float scaleY, GLfloat r, GLen
 	this->genPoints(x, y, r);
 	for(int i = 0; i < 300; i++)
 	{
-		Shape::colors.push_back( vec4(1.0, 0.0, 0.0, 1.0) );
+		Shape::colors.push_back( color );
 	}
 
 }

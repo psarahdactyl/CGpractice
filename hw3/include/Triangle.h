@@ -7,7 +7,7 @@ class Triangle: public Shape
 {
 	public:
 		void genPoints(GLfloat x, GLfloat y, GLfloat r); 
-		Triangle(GLfloat x, GLfloat y, GLfloat r, GLenum mode);
+		Triangle(GLfloat x, GLfloat y, GLfloat r, GLenum mode, vec4 color);
 };
 
 
