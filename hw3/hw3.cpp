@@ -22,7 +22,7 @@ vec4 *cols;
 
 // Animation
 //static bool animated = true;
-static GLfloat currentAngleOfRotation = 0.0;
+//static GLfloat currentAngleOfRotation = 0.0;
 
 // Basic Colors
 static vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
@@ -136,19 +136,12 @@ void displayMain( void )
 {
     glClear( GL_COLOR_BUFFER_BIT );     // clear the window
 
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-	glRotatef( currentAngleOfRotation, 0.0, 0.0, 1.0 );
-
 	int start = 0;
 	for(int i = 0; i < 6; i++)
 	{
     	glDrawArrays( shapesMain[i]->mode, start, shapesMain[i]->numPoints);  // draw the points
 		start += shapesMain[i]->numPoints;
 	}
-
-	//Shape::coords.clear();
-	//Shape::colors.clear();
 
 	glutSwapBuffers();
 }
@@ -163,9 +156,6 @@ void displaySub( void )
     	glDrawArrays( shapesSub[i]->mode, start, shapesSub[i]->numPoints);  // draw the points
 		start += shapesSub[i]->numPoints;
 	}
-	
-	//Shape::coords.clear();
-	//Shape::colors.clear();
 
 	glutSwapBuffers();
 }
@@ -181,9 +171,6 @@ void displaySecond( void )
 		start += shapesSecond[i]->numPoints;
 	}
 
-	//Shape::coords.clear();
-	//Shape::colors.clear();
-
 	glutSwapBuffers();
 }
 
@@ -192,10 +179,41 @@ void displaySecond( void )
 
 void idleMain( void )
 {
-	glTranslatef( 0.0, -0.3, 0.0 );
-	glRotatef( 360, 0, 0, 1 );
-	glTranslatef( 0.0, 0.3, 0.0 );
+	mat2 rotateCW;
+	rotateCW[0] = vec2( cos(M_PI/128), -sin(M_PI/128) );
+	rotateCW[1] = vec2( sin(M_PI/128), cos(M_PI/128) );
+
+	for(int i = 0; i < 24; i ++)
+	{
+		vec2 vector = Shape::coords[i];
+		vector[1] += 0.3;
+		vec2 newPoint = rotateCW * vector;
+		newPoint[1] -= 0.3;
+		Shape::coords.at(i) = newPoint;
+	}
+
+	loadBuffer();
 	glutPostRedisplay();
+}
+
+void idleSecond( void )
+{
+	mat2 rotateCCW;
+	rotateCCW[0] = vec2( cos(M_PI/128), sin(M_PI/128) );
+	rotateCCW[1] = vec2( -sin(M_PI/128), cos(M_PI/128) );
+	for(int i = 624; i < 627; i++)
+	{
+		vec2 vector = Shape::coords[i];
+		vector[0] -= 5.0;
+		vector[1] -= 5.0;
+		vec2 newPoint = rotateCCW * vector;
+		newPoint[0] += 0.5;
+		newPoint[1] += 0.5;
+		Shape::coords.at(i) = newPoint;
+	}
+	loadBuffer();
+	glutPostRedisplay();
+
 }
 
 //----------------------------------------------------------------------------
@@ -282,19 +300,19 @@ void mainMenu( int id )
 		case 2:
 			break;
 		case 3:
-			recolorShapes( white, 0, 3 );
-			recolorShapes( white, 8, 11 );
-			recolorShapes( white, 16, 19 );
+			recolorShapes( white, 0, 4 );
+			recolorShapes( white, 8, 12 );
+			recolorShapes( white, 16, 20 );
 			break;
 		case 4:
-			recolorShapes( red, 0, 3 );
-			recolorShapes( red, 8, 11 );
-			recolorShapes( red, 16, 19 );
+			recolorShapes( red, 0, 4 );
+			recolorShapes( red, 8, 12 );
+			recolorShapes( red, 16, 20 );
 			break;
 		case 5:
-			recolorShapes( green, 0, 3 );
-			recolorShapes( green, 8, 11 );
-			recolorShapes( green, 16, 19 );
+			recolorShapes( green, 0, 4 );
+			recolorShapes( green, 8, 12 );
+			recolorShapes( green, 16, 20 );
 			break;
 	}
 
@@ -354,6 +372,7 @@ int main( int argc, char **argv )
     glewInit();    
     init( white );
 
+//	glutIdleFunc( idleSecond );
     glutDisplayFunc( displaySecond );
     glutKeyboardFunc( secondKeyboard );
 
