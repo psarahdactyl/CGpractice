@@ -9,6 +9,7 @@ class Circle: public Shape
 		void genPoints(GLfloat x, GLfloat y, GLfloat r); 
 		Circle(GLfloat x, GLfloat y, GLfloat r, GLenum mode, vec4 color);
 		Circle(GLfloat x, GLfloat y, float scaleX, float scaleY, GLfloat r, GLenum mode, vec4 color);
+		~Circle();
 	private:
 		float scaleX, scaleY;
 };

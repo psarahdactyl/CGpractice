@@ -21,8 +21,8 @@ vec2 *points;
 vec4 *cols; 
 
 // Animation
-//static bool animated = true;
-//static GLfloat currentAngleOfRotation = 0.0;
+int count;
+bool growing;
 
 // Basic Colors
 static vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
@@ -214,39 +214,47 @@ void idleMain( void )
 	loadBuffer();
 	glutSetWindow( secondWin );
 	glutPostRedisplay();
-	// circle
-	for(float j = 0.9; j < 1.1; j+=0.01)
+
+	//circle
+	//for(float theta; theta < 2*M_PI; theta+=0.1)
+	//{
+	//	Shape::coords.erase( Shape::coords.begin()+324, Shape::coords.begin()+624 ); 
+	//	new Circle(-0.5, -0.5, 0.3*(2+theta), GL_TRIANGLE_FAN, purple);
+	//}
+
+	float factor;
+
+	if(count == 0)
 	{
-		for(int i = 324; i < 624; i++)
-		{
-			vec2 vector = Shape::coords[i];
-			vector[0] += 0.5;
-			vector[1] += 0.5;
-			vec2 newPoint = j * vector;
-			newPoint[0] -= 0.5;
-			newPoint[1] -= 0.5;
-			Shape::coords.at(i) = newPoint;
-		}
+		growing = true;
+	}
+	else if(count == 100)
+	{
+		growing = false;
+	}
+	if(growing)
+	{
+		factor = 1.005;
+		count++;
+	}
+	else
+	{
+		factor = 1 / 1.005;
+		count--;
+	}
+	for(int i = 324; i < 624; i++)
+	{
+		vec2 vector = Shape::coords[i];
+		vector[0] += 0.5;
+		vector[1] += 0.5;
+		vec2 newPoint = factor * vector;
+		newPoint[0] -= 0.5;
+		newPoint[1] -= 0.5;
+		Shape::coords.at(i) = newPoint;
 		loadBuffer();
 		glutSetWindow( secondWin );
 		glutPostRedisplay();
 	}
-	//for(float j = 1.1; j > 0.9; j-=0.01)
-	//{
-	//	for(int i = 324; i < 624; i++)
-	//	{
-	//		vec2 vector = Shape::coords[i];
-	//		vector[0] += 0.5;
-	//		vector[1] += 0.5;
-	//		vec2 newPoint = j * vector;
-	//		newPoint[0] -= 0.5;
-	//		newPoint[1] -= 0.5;
-	//		Shape::coords.at(i) = newPoint;
-	//	}
-	//	loadBuffer();
-	//	glutSetWindow( secondWin );
-	//	glutPostRedisplay();
-	//}
 
 }
 

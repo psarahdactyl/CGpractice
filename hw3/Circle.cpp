@@ -40,6 +40,9 @@ Circle::Circle(GLfloat x, GLfloat y, float scaleX, float scaleY, GLfloat r, GLen
 
 }
 
+Circle::~Circle()
+{}
+
 void Circle::genPoints(GLfloat x, GLfloat y, GLfloat r)
 {
 	float unit = (2 * M_PI);
