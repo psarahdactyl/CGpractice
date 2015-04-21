@@ -179,42 +179,77 @@ void displaySecond( void )
 
 void idleMain( void )
 {
-	mat2 rotateCW;
-	rotateCW[0] = vec2( cos(M_PI/128), -sin(M_PI/128) );
-	rotateCW[1] = vec2( sin(M_PI/128), cos(M_PI/128) );
+	// Square rotation in main window
+	mat2 rotateCCW;
+	rotateCCW[0] = vec2( cos(M_PI/128), -sin(M_PI/128) );
+	rotateCCW[1] = vec2( sin(M_PI/128), cos(M_PI/128) );
 
 	for(int i = 0; i < 24; i ++)
 	{
 		vec2 vector = Shape::coords[i];
 		vector[1] += 0.3;
-		vec2 newPoint = rotateCW * vector;
+		vec2 newPoint = rotateCCW * vector;
 		newPoint[1] -= 0.3;
 		Shape::coords.at(i) = newPoint;
 	}
-
 	loadBuffer();
+	glutSetWindow( mainWin );
 	glutPostRedisplay();
-}
 
-void idleSecond( void )
-{
-	mat2 rotateCCW;
-	rotateCCW[0] = vec2( cos(M_PI/128), sin(M_PI/128) );
-	rotateCCW[1] = vec2( -sin(M_PI/128), cos(M_PI/128) );
+	// Triangle rotation and circle scaling in second window
+	mat2 rotateCW;
+	rotateCW[0] = vec2( cos(M_PI/128), sin(M_PI/128) );
+	rotateCW[1] = vec2( -sin(M_PI/128), cos(M_PI/128) );
+	// triangle
 	for(int i = 624; i < 627; i++)
 	{
 		vec2 vector = Shape::coords[i];
-		vector[0] -= 5.0;
-		vector[1] -= 5.0;
-		vec2 newPoint = rotateCCW * vector;
+		vector[0] -= 0.5;
+		vector[1] -= 0.5;
+		vec2 newPoint = rotateCW * vector;
 		newPoint[0] += 0.5;
 		newPoint[1] += 0.5;
 		Shape::coords.at(i) = newPoint;
-	}
+	}		
 	loadBuffer();
+	glutSetWindow( secondWin );
 	glutPostRedisplay();
+	// circle
+	for(float j = 0.9; j < 1.1; j+=0.01)
+	{
+		for(int i = 324; i < 624; i++)
+		{
+			vec2 vector = Shape::coords[i];
+			vector[0] += 0.5;
+			vector[1] += 0.5;
+			vec2 newPoint = j * vector;
+			newPoint[0] -= 0.5;
+			newPoint[1] -= 0.5;
+			Shape::coords.at(i) = newPoint;
+		}
+		loadBuffer();
+		glutSetWindow( secondWin );
+		glutPostRedisplay();
+	}
+	//for(float j = 1.1; j > 0.9; j-=0.01)
+	//{
+	//	for(int i = 324; i < 624; i++)
+	//	{
+	//		vec2 vector = Shape::coords[i];
+	//		vector[0] += 0.5;
+	//		vector[1] += 0.5;
+	//		vec2 newPoint = j * vector;
+	//		newPoint[0] -= 0.5;
+	//		newPoint[1] -= 0.5;
+	//		Shape::coords.at(i) = newPoint;
+	//	}
+	//	loadBuffer();
+	//	glutSetWindow( secondWin );
+	//	glutPostRedisplay();
+	//}
 
 }
+
 
 //----------------------------------------------------------------------------
 
@@ -296,8 +331,10 @@ void mainMenu( int id )
 {
 	switch( id ) {
 		case 1: 
+			glutIdleFunc( NULL );
 			break;
 		case 2:
+			glutIdleFunc( idleMain );
 			break;
 		case 3:
 			recolorShapes( white, 0, 4 );
@@ -372,7 +409,6 @@ int main( int argc, char **argv )
     glewInit();    
     init( white );
 
-//	glutIdleFunc( idleSecond );
     glutDisplayFunc( displaySecond );
     glutKeyboardFunc( secondKeyboard );
 
