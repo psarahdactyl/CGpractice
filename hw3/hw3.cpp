@@ -215,13 +215,6 @@ void idleMain( void )
 	glutSetWindow( secondWin );
 	glutPostRedisplay();
 
-	//circle
-	//for(float theta; theta < 2*M_PI; theta+=0.1)
-	//{
-	//	Shape::coords.erase( Shape::coords.begin()+324, Shape::coords.begin()+624 ); 
-	//	new Circle(-0.5, -0.5, 0.3*(2+theta), GL_TRIANGLE_FAN, purple);
-	//}
-
 	float factor;
 
 	if(count == 0)
