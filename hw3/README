@@ -1,12 +1,16 @@
 Sarah Kushner
 sak338@drexel.edu
 CS 432
-Assignment 2
+Assignment 3
 
+PLATFORM:
 I developed and tested this in Ubuntu 14.04.
 
-I did not include the compiled file, just the source.
-Running "make hw2" will build the first program.
-Running "make hw2-part2" will build the first program.
-Then "./hw2" and "./hw2-part2" runs it, as you already know.
+INSTRUCTIONS:
+Running "make hw3" will build the first program.
+Then "./hw3" runs it.
+
+NOTES:
+The drop down menu containing the Stop and Start Animation is only accesible from the main window.
+Pressing single letter keys to change colors only works if the second window is "in focus."
 
