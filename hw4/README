@@ -1,0 +1,28 @@
+Sarah Kushner
+sak338@drexel.edu
+CS 432
+Assignment 4
+
+PLATFORM:
+I developed and tested this in Ubuntu 14.04.
+
+INSTRUCTIONS:
+Running "make hw4" will build the first program.
+Then "./hw4" runs it.
+
+NOTES:
+INSTRUCTIONS FOR KEYS:
+'q' -  quits the program
+
+'w' -  transformations in the +x direction
+'e' -  transformations in the +y direction
+'r' -  transformations in the +z direction
+'a' -  transformations in the -x direction
+'s' -  transformations in the -y direction
+'d' -  transformations in the -z direction
+'z' -  resets all transformations
+
+'n' -  decreases transformation delta of whichever transformation is selected
+'m' -  increases transformation delta of whichever transformation is selected
+
+
