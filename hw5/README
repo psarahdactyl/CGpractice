@@ -1,0 +1,28 @@
+Sarah Kushner
+sak338@drexel.edu
+CS 432
+Assignment 5
+
+PLATFORM:
+I developed and tested this in Ubuntu 14.04.
+
+INSTRUCTIONS:
+Running "make hw5" will build the first program.
+Then "./hw5 <SMF FILE NAME>" runs it.
+
+NOTES:
+
+INSTRUCTIONS FOR KEYS
+'q' -  quits the program
+
+'+' -  increases speed of rotation
+'-' -  decreases speed of rotation
+'r' -  increases orbit radius
+'R' -  decreases orbit radius
+'h' -  increases height of camera on cylinder
+'H' -  decreases height of camera on cylinder
+'z' -  resets all transformations
+
+There is also a drop down menu to start and stop the rotation
+and to switch between parallel and perspective projections.
+

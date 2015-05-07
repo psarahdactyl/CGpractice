@@ -4,114 +4,158 @@
 
 #include "Angel.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <iterator>
 
 using namespace std;
 
 // Point and Color arrays
-vec4 points[36];
-vec4 colors[36]; 
+vec4* points;
+vec4* colors; 
+vec4* vertices;
+vec3* normals;
+int verticesSize;
+int pointsSize;
 
-static unsigned int NumVertices;
+GLuint model_view;  // model-view matrix uniform shader variable location
+GLuint projection; // projection matrix uniform shader variable location
 
-// Transformation bools for each
-bool scaleEnabled = false;
-bool rotateEnabled = false;
-bool translateEnabled = false;
-// Matrix
-mat4 s;
-mat4 rx;
-mat4 ry;
-mat4 rz;
-mat4 t;
+// Projection transformation parameters
+mat4 p; // projection matrix
 
-// Shader variables
-GLuint scaleLoc;
-GLuint rotateLocX;
-GLuint rotateLocY;
-GLuint rotateLocZ;
-GLuint translateLoc;
+GLfloat leftA = -1.0, rightA = 1.0;
+GLfloat bottom = -1.0, top = 1.0;
+GLfloat zNear = 0.5, zFar = 3.0;
 
-GLfloat vector[3];
-GLfloat matrix[16];
+GLfloat fovy = 45.0;  // Field-of-view in Y direction angle (in degrees)
+GLfloat aspect;       // Viewport aspect ratio
 
-// x,y,z values, delta, theta
-GLfloat xscale = 1.0;
-GLfloat yscale = 1.0;
-GLfloat zscale = 1.0;
+GLfloat radius = 1.0;
+GLfloat theta = 0.0;
+GLfloat phi = 0.0;
 
-GLfloat xrotate = 1.0;
-GLfloat yrotate = 1.0;
-GLfloat zrotate = 1.0;
+float cameraSpeed = 3.0;
 
-GLfloat xtranslate = 0.0;
-GLfloat ytranslate = 0.0;
-GLfloat ztranslate = 0.0;
-
-GLfloat xtheta = 0.0;
-GLfloat ytheta = 0.0;
-GLfloat ztheta = 0.0;
-
-GLfloat scaledelta = 0.25;
-GLfloat thetadelta = M_PI/4;
-GLfloat translatedelta = 0.25;
-
-
-// Vertices of a unit cube centered at origin
-// sides aligned with axes
-static vec4 vertices[8] = {
-	vec4( -0.5, -0.5, 0.5, 1.0 ),
-	vec4( -0.5, 0.5, 0.5, 1.0 ),
-	vec4( 0.5, 0.5, 0.5, 1.0 ),
-	vec4( 0.5, -0.5, 0.5, 1.0 ),
-	vec4( -0.5, -0.5, -0.5, 1.0 ),
-	vec4( -0.5, 0.5, -0.5, 1.0 ),
-	vec4( 0.5, 0.5, -0.5, 1.0 ),
-	vec4( 0.5, -0.5, -0.5, 1.0 )
-}; 
-
-vec4 vertices_original[8] = vertices;
-
-// RGBA colors
-static vec4 vertex_colors[8] = {
-	vec4( 0.0, 0.0, 0.0, 1.0 ), // black
-	vec4( 1.0, 0.0, 0.0, 1.0 ), // red
-	vec4( 1.0, 1.0, 0.0, 1.0 ), // yellow
-	vec4( 0.0, 1.0, 0.0, 1.0 ), // green
-	vec4( 0.0, 0.0, 1.0, 1.0 ), // blue
-	vec4( 1.0, 0.0, 1.0, 1.0 ), // magenta
-	vec4( 1.0, 1.0, 1.0, 1.0 ), // white
-	vec4( 0.0, 1.0, 1.0, 1.0 ) // cyan
-};
+//Viewing options
+bool parallel = true;
+bool perspective = false;
 
 // Windows
 int mainWin;
 
+//--------------------------------------------------------------------------
+
+vec3 getNormal(int a, int b, int c)
+{
+	vec4 u = vertices[b] - vertices[a];
+	vec4 v = vertices[c] - vertices[a];
+
+	vec3 normal = normalize( cross(u, v) );
+	
+	return normal;
+}
+
+int Index = 0;
+void tri( int a, int b, int c )
+{
+	vec3 normal = getNormal(a, b, c);
+	//colors[Index] = vertex_colors[a % 8]; 
+	points[Index] = vertices[a];
+	normals[Index] = normal;
+	Index++;
+	//colors[Index] = vertex_colors[b % 8]; 
+	points[Index] = vertices[b]; 
+	normals[Index] = normal;
+	Index++;
+	//colors[Index] = vertex_colors[c % 8]; 
+	points[Index] = vertices[c]; 
+	normals[Index] = normal;
+	Index++;
+
+}
 
 //--------------------------------------------------------------------------
 
-// quad generates two triangles for each face and assigns colors
-// to the vertices
-int Index = 0;
-void quad( int a, int b, int c, int d )
+void makeVertices( char * filename )
 {
-	colors[Index] = vertex_colors[a]; 
-	points[Index] = vertices[a];
-	Index++;
-	colors[Index] = vertex_colors[b]; 
-	points[Index] = vertices[b]; 
-	Index++;
-	colors[Index] = vertex_colors[c]; 
-	points[Index] = vertices[c]; 
-	Index++;
-	colors[Index] = vertex_colors[a]; 
-	points[Index] = vertices[a]; 
-	Index++;
-	colors[Index] = vertex_colors[c]; 
-	points[Index] = vertices[c]; 
-	Index++;
-	colors[Index] = vertex_colors[d]; 
-	points[Index] = vertices[d]; 
-	Index++;
+	// open file
+	ifstream myfile;
+	myfile.open( filename );
+
+	string line;
+
+	// read file
+	pointsSize = 0;
+	verticesSize = 0;
+	while (getline( myfile, line ))
+	{
+		istringstream iss( line );
+		vector<string> tokens;
+		copy(istream_iterator<string>(iss),
+			 istream_iterator<string>(),
+			 back_inserter(tokens));
+
+		if(tokens.size() == 0)
+			continue;
+		else if(tokens.at(0) == "v")
+			verticesSize++;
+		else if(tokens.at(0) == "f")
+			pointsSize++;
+	}
+
+	pointsSize *= 3;
+
+	vertices = new vec4[verticesSize];
+	normals = new vec3[pointsSize];
+	points = new vec4[pointsSize];
+	colors = new vec4[pointsSize];
+
+	myfile.close();
+	myfile.open( filename );
+	
+	//cout << pointsSize << endl;
+
+	int i = 0;
+	while (getline( myfile, line ))
+	{
+		istringstream iss( line );
+		vector<string> tokens;
+		copy(istream_iterator<string>(iss),
+			 istream_iterator<string>(),
+			 back_inserter(tokens));
+
+		if(tokens.size() == 0)
+			continue;
+
+		else if(tokens.at(0) == "v")
+		{
+			float x, y, z;
+			stringstream datax(tokens.at(1));
+			datax >> x;
+			stringstream datay(tokens.at(2));
+			datay >> y;
+			stringstream dataz(tokens.at(3));
+			dataz >> z;
+			vertices[i] = vec4(x, y, z, 1.0);
+			i++;
+		}
+		else if(tokens.at(0) == "f")
+		{
+			int v1, v2, v3;	
+			stringstream datav1(tokens.at(1));
+			datav1 >> v1;
+			stringstream datav2(tokens.at(2));
+			datav2 >> v2;
+			stringstream datav3(tokens.at(3));
+			datav3 >> v3;
+
+			tri(v1-1, v2-1, v3-1);
+		}
+	}
 }
 
 //--------------------------------------------------------------------------
@@ -119,36 +163,20 @@ void quad( int a, int b, int c, int d )
 void loadBuffer( void )
 {
 	// Load array into buffer
-	glBufferData( GL_ARRAY_BUFFER, sizeof(points) +
-							 sizeof(colors), NULL, GL_STATIC_DRAW );
+	glBufferData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize +
+							 sizeof(*normals)*pointsSize, NULL, GL_STATIC_DRAW );
 	glBufferSubData( GL_ARRAY_BUFFER, 0,
-							  sizeof(points), points );
-	glBufferSubData( GL_ARRAY_BUFFER, sizeof(points),
-							   sizeof(colors), colors );
+							  sizeof(*points)*pointsSize, points );
+	glBufferSubData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize,
+							   sizeof(*normals)*pointsSize, normals );
 
 
 }
 
 //--------------------------------------------------------------------------
 
-// generate 12 triangles: 36 vertices and 36 colors
-void colorcube()
-{
-	Index = 0;
-	NumVertices = 36;
-	quad( 1, 0, 3, 2 );
-	quad( 2, 3, 7, 6 );
-	quad( 3, 0, 4, 7 );
-	quad( 6, 5, 1, 2 );
-	quad( 4, 5, 6, 7 );
-	quad( 5, 4, 0, 1 );
-} 
-
-//--------------------------------------------------------------------------
-
 void init( )
 {
-	colorcube();
 
 	// Initialization
 	GLuint vao, buffer;
@@ -165,25 +193,46 @@ void init( )
 	loadBuffer();
 
 	// Load shaders and use the resulting shader program
-	GLuint program = InitShader( "vshdrcube.glsl", "fshdrcube.glsl" );
+	GLuint program = InitShader( "vshdr.glsl", "fshdr.glsl" );
 	glUseProgram( program );
 
-	// set up vertex arrays
+	// Set up vertex arrays
 	GLuint vPosition = glGetAttribLocation( program, "vPosition" );
 	glEnableVertexAttribArray( vPosition );
 	glVertexAttribPointer( vPosition, 4, GL_FLOAT, GL_FALSE, 0,
 					    BUFFER_OFFSET(0) );
 
-	GLuint vColor = glGetAttribLocation( program, "vColor" );
-	glEnableVertexAttribArray( vColor );
-	glVertexAttribPointer( vColor, 4, GL_FLOAT, GL_FALSE, 0,
-						   BUFFER_OFFSET(sizeof(points)) );
+	GLuint vNormal = glGetAttribLocation( program, "vNormal" );
+	glEnableVertexAttribArray( vNormal );
+	glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize) );
 
-	scaleLoc = glGetUniformLocation( program, "scale" );
-	rotateLocX = glGetUniformLocation( program, "rotatex" );
-	rotateLocY = glGetUniformLocation( program, "rotatey" );
-	rotateLocZ = glGetUniformLocation( program, "rotatez" );
-	translateLoc = glGetUniformLocation( program, "translate" );
+	// Initialize shader lighting parameters
+	vec4 light_position1( 0.0, 0.0, -1.0, 0.0 );
+	vec4 light_position2( 0.0, 1.0, -1.0, 0.0 );
+	vec4 light_diffuse1( 1.0, 1.0, 0.0, 1.0 );
+	vec4 light_diffuse2( 1.0, 0.0, 1.0, 1.0 );
+
+	vec4 material_diffuse1( 1.0, 0.1, 0.0, 1.0 );
+	vec4 material_diffuse2( 1.0, 0.2, 0.0, 1.0 );
+
+	vec4 diffuse_product1 = light_diffuse1 * material_diffuse1;
+	vec4 diffuse_product2 = light_diffuse2 * material_diffuse2;
+
+	// Uniforms
+	glUniform4fv( glGetUniformLocation(program, "DiffuseProduct1"),
+					1, diffuse_product1 );
+	glUniform4fv( glGetUniformLocation(program, "DiffuseProduct2"),
+					1, diffuse_product2 );
+
+	glUniform4fv( glGetUniformLocation(program, "LightPosition1"),
+					1, light_position1 );
+	glUniform4fv( glGetUniformLocation(program, "LightPosition2"),
+					1, light_position2 );
+
+    model_view = glGetUniformLocation( program, "model_view" );
+	projection = glGetUniformLocation( program, "projection" );
+
 
 	glClearColor( 1.0, 1.0, 1.0, 1.0 );
 
@@ -195,123 +244,87 @@ void displayMain( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );     // clear the window
 
-	glUniformMatrix4fv( scaleLoc, 1, GL_FALSE, &s[0][0] );
-	glUniformMatrix4fv( rotateLocX, 1, GL_FALSE, &rx[0][0] );
-	glUniformMatrix4fv( rotateLocY, 1, GL_FALSE, &ry[0][0] );
-	glUniformMatrix4fv( rotateLocZ, 1, GL_FALSE, &rz[0][0] );
-	glUniformMatrix4fv( translateLoc, 1, GL_FALSE, &t[0][0] );
+    vec4  eye( radius*sin(theta)*cos(phi), 
+					radius*sin(theta)*sin(phi), 
+					radius*cos(theta),
+					1.0 );
+	vec4  at( 0.0, 0.0, 0.0, 1.0 );
+	vec4 up( 0.0, 1.0, 0.0, 0.0 );
 
-	glDrawArrays( GL_TRIANGLES, 0, NumVertices );
+	mat4 mv = LookAt( eye, at, up );
+	glUniformMatrix4fv( model_view, 1, GL_TRUE, mv );
+
+	// Orthographic
+	if( parallel )
+		p = Ortho( leftA, rightA, bottom, top, zNear, zFar );
+	// Perscpective
+	else if( perspective )
+		p = Perspective( fovy, aspect, zNear, zFar );
+
+	glUniformMatrix4fv( projection, 1, GL_TRUE, p );
+
+	glDrawArrays( GL_TRIANGLES, 0, pointsSize);
 
 	glutSwapBuffers();
 }
 
+//----------------------------------------------------------------------------
+
 void idleMain( void )
 {
+	GLfloat dr = cameraSpeed * DegreesToRadians;
+	theta += dr; 
+	//cout << theta << endl;
 	glutPostRedisplay();
+}
+
+//----------------------------------------------------------------------------
+
+void reshapeMain( int width, int height )
+{
+	glViewport( 0, 0, width, height );
+	aspect = GLfloat(width)/height;
 }
 
 //----------------------------------------------------------------------------
 
 void keyboard( unsigned char key, int x, int y )
 {
+	GLfloat dr = 3.0 * DegreesToRadians;
     switch ( key ) {
     case 'q':
         exit( EXIT_SUCCESS );
         break;
-    case 'w':
-		if(scaleEnabled)
-			xscale += scaledelta;
-		else if(rotateEnabled)
-			xtheta += thetadelta;
-		else if(translateEnabled)
-			xtranslate += translatedelta;
-        break;
-    case 'e':
-		if(scaleEnabled)
-			yscale += scaledelta;
-		else if(rotateEnabled)
-			ytheta += thetadelta;
-		else if(translateEnabled)
-			ytranslate += translatedelta;
-        break;
-    case 'r':
-		if(scaleEnabled)
-			zscale += scaledelta;
-		else if(rotateEnabled)
-			ztheta += thetadelta;
-		else if(translateEnabled)
-			ztranslate += translatedelta;
-        break;
-    case 'a':
-		if(scaleEnabled)
-			xscale -= scaledelta;
-		else if(rotateEnabled)
-			xtheta -= thetadelta;
-		else if(translateEnabled)
-			xtranslate -= translatedelta;
-        break;
-    case 's':
-		if(scaleEnabled)
-			yscale -= scaledelta;
-		else if(rotateEnabled)
-			ytheta -= thetadelta;
-		else if(translateEnabled)
-			ytranslate -= translatedelta;
-        break;
-    case 'd':
-		if(scaleEnabled)
-			zscale -= scaledelta;
-		else if(rotateEnabled)
-			ztheta -= thetadelta;
-		else if(translateEnabled)
-			ztranslate -= translatedelta;
-        break;
-    case 'z':
-		s = identity();
-		rx = identity();
-		ry = identity();
-		rz = identity();
-		t = identity();
-
-		xscale = 1.0;
-		yscale = 1.0;
-		zscale = 1.0;
-		
-		xrotate = 1.0;
-		yrotate = 1.0;
-		zrotate = 1.0;
-		
-		xtranslate = 0.0;
-		ytranslate = 0.0;
-		ztranslate = 0.0;
-		
-		xtheta = 0.0;
-		ytheta = 0.0;
-		ztheta = 0.0;
-        break;
-    case 'n':
-		if(scaleEnabled)
-			scaledelta -= scaledelta;
-		else if(rotateEnabled)
-			thetadelta -= (M_PI/4);
-		else if(translateEnabled)
-			translatedelta -= translatedelta;
-        break;
-    case 'm':
-		if(scaleEnabled)
-			scaledelta += scaledelta;
-		else if(rotateEnabled)
-			thetadelta += (M_PI/4);
-		else if(translateEnabled)
-			translatedelta += translatedelta;
-        break;
-    }
-	s = Scale( xscale, yscale, zscale );
-	rx = RotateX( xtheta );
-	ry = RotateY( ytheta );
-	rz = RotateZ( ztheta );
-	t = transpose(Translate( xtranslate, ytranslate, ztranslate ));
+  	case '+': 
+		cameraSpeed += 0.5; 
+		break;
+  	case '-': 
+		cameraSpeed -= 0.5; 
+		break;
+  	case 'r': 
+		radius *= 1.5; 
+		break;
+  	case 'R': 
+		radius *= 0.667; 
+		break;
+ 	case 'h': 
+		phi += dr; 
+		break;
+ 	case 'H': 
+		phi -= dr; 
+		break;
+	case 'z':  // reset values to their defaults
+		leftA = -1.0;
+		rightA = 1.0;
+		bottom = -1.0;
+		top = 1.0;
+		zNear = 0.5;
+		zFar = 3.0;
+		radius = 1.0;
+		theta = 0.0;
+		phi = 0.0;
+		break;
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -320,42 +333,46 @@ void mainMenu( int id )
 {
 	switch( id ) {
 		case 1:
-			scaleEnabled = true;	
-			rotateEnabled = false;	
-			translateEnabled = false;	
+			parallel = false;	
+			perspective = true;	
 			break;
 		case 2:
-			scaleEnabled = false;	
-			rotateEnabled = true;	
-			translateEnabled = false;	
+			perspective = false;	
+			parallel = true;	
 			break;
 		case 3:
-			scaleEnabled = false;	
-			rotateEnabled = false;	
-			translateEnabled = true;	
+			glutIdleFunc( NULL );
+			break;
+		case 4:
+			glutIdleFunc( idleMain );
 			break;
 	}
 
 	glutPostRedisplay();
 }
+
+
 //----------------------------------------------------------------------------
 
 int main( int argc, char **argv )
 {
+
+	makeVertices( argv[1] );
+
 	cout << endl;
 	cout << "INSTRUCTIONS FOR KEYS" << endl;
 	cout << "'q' -  quits the program" << endl;
 	cout << endl;
-	cout << "'w' -  transformations in the +x direction" << endl;
-	cout << "'e' -  transformations in the +y direction" << endl;
-	cout << "'r' -  transformations in the +z direction" << endl;
-	cout << "'a' -  transformations in the -x direction" << endl;
-	cout << "'s' -  transformations in the -y direction" << endl;
-	cout << "'d' -  transformations in the -z direction" << endl;
+	cout << "'+' -  increases speed of rotation" << endl;
+	cout << "'-' -  decreases speed of rotation" << endl;
+	cout << "'r' -  increases orbit radius" << endl;
+	cout << "'R' -  decreases orbit radius" << endl;
+	cout << "'h' -  increases height of camera on cylinder" << endl;
+	cout << "'H' -  decreases height of camera on cylinder" << endl;
 	cout << "'z' -  resets all transformations" << endl;
 	cout << endl;
-	cout << "'n' -  decreases transformation delta" << endl;
-	cout << "'m' -  increases transformation delta" << endl;
+	cout << "There is also a drop down menu to start and stop the rotation" << endl;
+	cout << "and to switch between parallel and perspective projections." << endl;
 	cout << endl;
 
     glutInit( &argc, argv );
@@ -363,22 +380,25 @@ int main( int argc, char **argv )
     glutInitWindowSize( 500, 500 );
 
 	// Main Window
-    mainWin = glutCreateWindow( "COLOR CUBE." );
+    mainWin = glutCreateWindow( "MODELS, YO." );
     glewExperimental=GL_TRUE; 
     glewInit(); 
 
     init();
 
 	glutCreateMenu( mainMenu ); // Set up menu
-	glutAddMenuEntry ( "SCALE", 1 );
-	glutAddMenuEntry( "ROTATE", 2 );
-	glutAddMenuEntry( "TRANSLATE", 3 );
+	glutAddMenuEntry ( "Parallel Projection", 1 );
+	glutAddMenuEntry( "Perspective Projection", 2 );
+	glutAddMenuEntry( "Stop Animation", 3 );
+	glutAddMenuEntry( "Start Animation", 4 );
 	glutAttachMenu( GLUT_RIGHT_BUTTON );
 
 	glutIdleFunc( idleMain );
     glutDisplayFunc( displayMain );
+    glutReshapeFunc( reshapeMain );
     glutKeyboardFunc( keyboard );
 	glEnable(GL_DEPTH_TEST);
+	glShadeModel(GL_FLAT);
 
 	// Run
     glutMainLoop();
