@@ -36,7 +36,8 @@ GLfloat aspect;       // Viewport aspect ratio
 
 GLfloat radius = 1.0;
 GLfloat theta = 0.0;
-GLfloat phi = 0.0;
+GLfloat yVal = 0.5;
+//GLfloat phi = 0.0;
 
 float cameraSpeed = 3.0;
 
@@ -244,10 +245,7 @@ void displayMain( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );     // clear the window
 
-    vec4  eye( radius*sin(theta)*cos(phi), 
-					radius*sin(theta)*sin(phi), 
-					radius*cos(theta),
-					1.0 );
+    vec4  eye( radius*sin(theta), yVal, radius*cos(theta), 1.0 );
 	vec4  at( 0.0, 0.0, 0.0, 1.0 );
 	vec4 up( 0.0, 1.0, 0.0, 0.0 );
 
@@ -257,7 +255,7 @@ void displayMain( void )
 	// Orthographic
 	if( parallel )
 		p = Ortho( leftA, rightA, bottom, top, zNear, zFar );
-	// Perscpective
+	// Perspective
 	else if( perspective )
 		p = Perspective( fovy, aspect, zNear, zFar );
 
@@ -308,10 +306,10 @@ void keyboard( unsigned char key, int x, int y )
 		radius *= 0.667; 
 		break;
  	case 'h': 
-		phi += dr; 
+		yVal += dr; 
 		break;
  	case 'H': 
-		phi -= dr; 
+		yVal -= dr; 
 		break;
 	case 'z':  // reset values to their defaults
 		leftA = -1.0;
@@ -322,7 +320,7 @@ void keyboard( unsigned char key, int x, int y )
 		zFar = 3.0;
 		radius = 1.0;
 		theta = 0.0;
-		phi = 0.0;
+		yVal = 1.0;
 		break;
 	}
 }
@@ -333,12 +331,12 @@ void mainMenu( int id )
 {
 	switch( id ) {
 		case 1:
-			parallel = false;	
-			perspective = true;	
-			break;
-		case 2:
 			perspective = false;	
 			parallel = true;	
+			break;
+		case 2:
+			parallel = false;	
+			perspective = true;	
 			break;
 		case 3:
 			glutIdleFunc( NULL );

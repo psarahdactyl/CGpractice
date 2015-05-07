@@ -33,7 +33,6 @@ void main()
 	gl_Position = projection * model_view * vPosition;
 	color = diffuse1 + diffuse2;
 	color.a = 1.0;
-	color.c = 1.0;
 
 }
 
