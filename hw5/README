@@ -7,8 +7,10 @@ PLATFORM:
 I developed and tested this in Ubuntu 14.04.
 
 INSTRUCTIONS:
-Running "make hw5" will build the first program.
-Then "./hw5 <SMF FILE NAME>" runs it.
+Running "make hw5" will build the program.
+Typing "make run" will build the program if it doesn't already exist and run the program with the bound-bunny_5k.smf file as an argument.
+	OR
+Typing "./hw5 <SMF FILE NAME>" will run the program on another argument.
 
 NOTES:
 
@@ -25,4 +27,8 @@ INSTRUCTIONS FOR KEYS
 
 There is also a drop down menu to start and stop the rotation
 and to switch between parallel and perspective projections.
+
+
+I didn't know if we were supposed to/required to change the bounding box to account for models that don't fit within bounding box.
+I don't know how to do that, so this program only looks good when smaller files are used. I suggest the bunny! I included it in the zip file.
 

@@ -272,7 +272,6 @@ void idleMain( void )
 {
 	GLfloat dr = cameraSpeed * DegreesToRadians;
 	theta += dr; 
-	//cout << theta << endl;
 	glutPostRedisplay();
 }
 
