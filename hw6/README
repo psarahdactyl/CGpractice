@@ -1,0 +1,14 @@
+Sarah Kushner
+sak338@drexel.edu
+CS 432
+Assignment 6
+
+PLATFORM:
+I developed and tested this in Ubuntu 14.04.
+
+INSTRUCTIONS:
+Running "make hw6" will build the program.
+Typing "make run" will build the program if it doesn't already exist and run the program with the bound-bunny_5k.smf file as an argument.
+	OR
+Typing "./hw6 <SMF FILE NAME>" will run the program on another argument.
+
