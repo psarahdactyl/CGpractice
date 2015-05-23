@@ -25,6 +25,7 @@ vec4* points;
 vec4* controls;
 vec4* vertices;
 vec3* normals;
+vec4* axes;
 int controlsSize;
 int verticesSize;
 int pointsSize;
@@ -180,8 +181,8 @@ void createPatch()
 	pointsSize = numFaces * 3;
 
 	vertices = new vec4[verticesSize];
-	normals = new vec3[pointsSize+controlsSize];
-	points = new vec4[pointsSize+controlsSize];
+	normals = new vec3[pointsSize+controlsSize+6];
+	points = new vec4[pointsSize+controlsSize+6];
 
 	int vertIndex = 0;
 	float inc = 1/((float)res-1);
@@ -280,10 +281,28 @@ void makeVertices( char * filename )
 	}
 
 	createPatch();
+	int contIndex = 0;
 	for(int i = pointsSize; i < controlsSize; i++)
 	{
-		points[i] = controls[i];
+		points[i] = controls[contIndex];
 		normals[i] = vec3(1.0, 0.0, 0.0);
+		contIndex++;
+	}
+
+	axes = new vec4[6];
+	axes[0] = vec4(-1.0, 0.0, 0.0);
+	axes[1] = vec4(1.0, 0.0, 0.0);
+	axes[2] = vec4(0.0, -1.0, 0.0);
+	axes[3] = vec4(0.0, 1.0, 0.0);
+	axes[4] = vec4(0.0, 0.0, -1.0);
+	axes[5] = vec4(.0, 0.0, 1.0);
+
+	int axesIndex = 0;
+	for(int i = pointsSize+controlsSize; i < 7; i++)
+	{		
+		points[i] = axes[axesIndex];
+		normals[i] = vec3(1.0, 1.0, 1.0);
+		axesIndex++;
 	}
 }
 
@@ -292,6 +311,7 @@ void makeVertices( char * filename )
 void loadBuffer( void )
 {
 	// Load array into buffer
+		cout << pointsSize << " " << controlsSize << endl;
 	glBufferData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize +
 							 sizeof(*normals)*pointsSize, NULL, GL_STATIC_DRAW );
 	glBufferSubData( GL_ARRAY_BUFFER, 0,
@@ -418,10 +438,11 @@ void displayMain( void )
 
 	glDrawArrays( GL_TRIANGLES, 0, pointsSize);
 	glPointSize( CPsize );
-//	shading = 2;
-	glDrawArrays( GL_POINTS, pointsSize+1, controlsSize);
-
-
+	//shading = 2;
+	glDrawArrays( GL_POINTS, pointsSize, controlsSize);
+	glDrawArrays( GL_LINES, pointsSize+controlsSize, 2);
+	glDrawArrays( GL_LINES, pointsSize+controlsSize+2, 2);
+	glDrawArrays( GL_LINES, pointsSize+controlsSize+4, 2);
 
 	glutSwapBuffers();
 }

@@ -1,0 +1,12 @@
+Sarah Kushner
+sak338@drexel.edu
+CS 432
+Assignment 7
+
+PLATFORM:
+I developed and tested this in Ubuntu 14.04.
+
+INSTRUCTIONS:
+Running "make hw7" will build the program.
+Typing "make run" will build the program if it doesn't already exist and run the program with the 'patchPoints.txt' file as an argument.
+
