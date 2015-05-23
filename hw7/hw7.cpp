@@ -311,9 +311,9 @@ void makeVertices( char * filename )
 void loadBuffer( void )
 {
 	// Load array into buffer
-		cout << pointsSize << " " << controlsSize << endl;
 	glBufferData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize +
 							 sizeof(*normals)*pointsSize, NULL, GL_STATIC_DRAW );
+
 	glBufferSubData( GL_ARRAY_BUFFER, 0,
 							  sizeof(*points)*pointsSize, points );
 
@@ -439,10 +439,10 @@ void displayMain( void )
 	glDrawArrays( GL_TRIANGLES, 0, pointsSize);
 	glPointSize( CPsize );
 	//shading = 2;
-	glDrawArrays( GL_POINTS, pointsSize, controlsSize);
-	glDrawArrays( GL_LINES, pointsSize+controlsSize, 2);
-	glDrawArrays( GL_LINES, pointsSize+controlsSize+2, 2);
-	glDrawArrays( GL_LINES, pointsSize+controlsSize+4, 2);
+	glDrawArrays( GL_POINTS, pointsSize, controlsSize );
+	glDrawArrays( GL_LINES, pointsSize+controlsSize, 2 );
+	glDrawArrays( GL_LINES, pointsSize+controlsSize+2, 2 );
+	glDrawArrays( GL_LINES, pointsSize+controlsSize+4, 2 );
 
 	glutSwapBuffers();
 }
@@ -733,7 +733,6 @@ int main( int argc, char **argv )
     glutReshapeFunc( reshapeMain );
     glutKeyboardFunc( keyboard );
 	glEnable(GL_DEPTH_TEST);
-	glShadeModel(GL_SMOOTH);
 
 	// Run
     glutMainLoop();
