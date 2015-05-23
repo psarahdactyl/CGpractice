@@ -18,11 +18,10 @@ using namespace std;
 
 typedef GLfloat point3[3];
 
-// Globals, i'm so sorry
+// Globals, I'm so sorry
 
 // Point and Color arrays
 vec4* points;
-vec4* colors; 
 vec4* controls;
 vec4* vertices;
 vec3* normals;
@@ -32,16 +31,21 @@ int pointsSize;
 
 //Resolution
 int res = 10;
+int triIndex = 0;
 
 // Viewing matrices
 GLuint model_view;  // model-view matrix uniform shader variable location
 GLuint projection; // projection matrix uniform shader variable location
 
+// VAO stuff
+GLuint vNormal;
+GLuint vPosition;
+
 // Shader options
-// phong is 0, flat is 1
+// phong is 0, flat is 1, neither is 2
 GLint shading_type;
 int shading = 0;
-
+int former_shading;
 
 // Projection transformation
 mat4 p; // projection matrix
@@ -59,6 +63,9 @@ GLfloat theta = 0.0;
 GLfloat yVal = 0.5;
 
 float cameraSpeed = 0.5;
+
+// Control Point selection
+int CP = 0;
 
 // Viewing options
 bool parallel = true;
@@ -113,7 +120,6 @@ void addToMap( vec4 key, vec3 value )
 
 //--------------------------------------------------------------------------
 
-int triIndex = 0;
 void tri( int a, int b, int c )
 {
 	vec3 normal = getNormal(a, b, c);
@@ -161,6 +167,59 @@ float b(int i, float u)
 
 //--------------------------------------------------------------------------
 
+void createPatch()
+{
+	vertexNormals.clear();
+	triIndex = 0;
+
+	verticesSize = res * res;
+	int numFaces = 2 * (verticesSize - 2 * res + 1);
+	pointsSize = numFaces * 3;
+
+	vertices = new vec4[verticesSize];
+	normals = new vec3[pointsSize+controlsSize];
+	points = new vec4[pointsSize+controlsSize];
+
+	int vertIndex = 0;
+	float inc = 1/((float)res-1);
+	for(float u = 0; u <= 1.0+inc/2; u+=inc)
+	{
+		for(float v = 0; v <= 1.0+inc/2; v+=inc)
+		{
+			for(int i = 0; i <= 3; i++)
+			{
+				float bu = b(i, u);
+				for(int j = 0; j <= 3; j++)
+				{ 
+					// b(u) * b(v) * pij
+					int ij = 4*i+j;
+					float bv = b(j, v);
+					vec4 sumPoint;
+					sumPoint = bu * bv * controls[ij];
+					vertices[vertIndex] += sumPoint;
+				}
+			}
+			vertIndex++;
+		}
+	}
+
+	for(int i = 0; i < (vertIndex-res); i++)
+	{
+		if((i+1) % res == 0)
+			continue;
+
+		tri(i, i+res, i+1);
+		tri(i+1, i+res, i+res+1);
+	}
+
+	for(int i = 0; i < pointsSize; i++)
+	{
+		normals[i] = getVertexNormal( points[i] );
+	}
+}
+
+//--------------------------------------------------------------------------
+
 void makeVertices( char * filename )
 {
 	// open file
@@ -182,23 +241,11 @@ void makeVertices( char * filename )
 
 		if(tokens.size() == 0)
 			continue;
-		//else if(tokens.at(0) == "v")
-		//	verticesSize++;
-		//else if(tokens.at(0) == "f")
-		//	pointsSize++;
 		else
 			controlsSize++;
 	}
 
-	verticesSize = res * res;
-	int numFaces = 2 * (verticesSize - 2 * res + 1);
-	pointsSize = numFaces * 3;
-
-	vertices = new vec4[verticesSize];
-	normals = new vec3[pointsSize];
 	controls = new vec4[controlsSize];
-	points = new vec4[pointsSize];
-	colors = new vec4[pointsSize];
 
 	myfile.close();
 	myfile.open( filename );
@@ -229,45 +276,11 @@ void makeVertices( char * filename )
 		}
 	}
 
-	int vertIndex = 0;
-	float inc = 1/((float)res-1);
-	for(float u = 0; u <= 1.0; u+=inc)
+	createPatch();
+	for(int i = pointsSize; i < controlsSize; i++)
 	{
-		for(float v = 0; v <= 1.0; v+=inc)
-		{
-			for(int i = 0; i <= 3; i++)
-			{
-				float bu = b(i, u);
-				for(int j = 0; j <= 3; j++)
-				{ 
-					// b(u) * b(v) * pij
-					int ij = 4*i+j;
-					float bv = b(j, v);
-					vec4 sumPoint;
-					sumPoint.x = bu * bv * controls[ij].x;
-					sumPoint.y = bu * bv * controls[ij].y;
-					sumPoint.z = bu * bv * controls[ij].z;
-					vertices[vertIndex] += sumPoint;
-				}
-			}
-			//cout << "# " << vertIndex << ":    " << vertices[vertIndex].x << " " << vertices[vertIndex].y << " " << vertices[vertIndex].z << endl;
-			vertIndex++;
-		}
-	}
-	for(int i = 0; i < (vertIndex-res); i++)
-	{
-		if((i+1) % 10 == 0)
-			continue;
-
-		tri(i, i+10, i+1);
-		tri(i+1, i+10, i+11);
-		//cout << i << " " << i+10 << " " << i+1 << endl;
-		//cout << i+1 << " " << i+10 << " " << i+11 << endl;
-	}
-	for(int i = 0; i < pointsSize; i++)
-	{
-		//cout << "# " << i << ":    " << points[i].x << " " << points[i].y << " " << points[i].z << endl;
-		normals[i] = getVertexNormal( points[i] );
+		points[i] = controls[i];
+		normals[i] = vec3(1.0, 0.0, 0.0);
 	}
 }
 
@@ -276,17 +289,11 @@ void makeVertices( char * filename )
 void loadBuffer( void )
 {
 	// Load array into buffer
-	//glBufferData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize +
-	//						 sizeof(*normals)*pointsSize, NULL, GL_STATIC_DRAW );
-	//glBufferSubData( GL_ARRAY_BUFFER, 0,
-	//						  sizeof(*points)*pointsSize, points );
-	//glBufferSubData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize,
-	//						   sizeof(*normals)*pointsSize, normals );
-
-	glBufferData( GL_ARRAY_BUFFER, sizeof(*controls)*controlsSize +
+	glBufferData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize +
 							 sizeof(*normals)*pointsSize, NULL, GL_STATIC_DRAW );
 	glBufferSubData( GL_ARRAY_BUFFER, 0,
-							  sizeof(*controls)*controlsSize, controls );
+							  sizeof(*points)*pointsSize, points );
+
 	glBufferSubData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize,
 							   sizeof(*normals)*pointsSize, normals );
 
@@ -315,19 +322,19 @@ void init( )
 	glUseProgram( program );
 
 	// Set up vertex arrays
-	GLuint vPosition = glGetAttribLocation( program, "vPosition" );
+	vPosition = glGetAttribLocation( program, "vPosition" );
 	glEnableVertexAttribArray( vPosition );
 	glVertexAttribPointer( vPosition, 4, GL_FLOAT, GL_FALSE, 0,
 					    BUFFER_OFFSET(0) );
 
-	GLuint vNormal = glGetAttribLocation( program, "vNormal" );
+	vNormal = glGetAttribLocation( program, "vNormal" );
 	glEnableVertexAttribArray( vNormal );
 	glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
-						   BUFFER_OFFSET(sizeof(*points)*pointsSize) );
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 
 	// Initialize shader lighting parameters
-	vec4 light_position1( 1.0, 1.0, 0.0, 1.0 );
-	vec4 light_position2( 1.0, 0.0, 1.0, 1.0 );
+	vec4 light_position1( 0.4, 0.1, 0.4, 1.0 );
+	vec4 light_position2( 0.7, 0.4, 0.2, 1.0 );
 
 	vec4 light_diffuse1( 0.5, 0.5, 0.5, 1.0 );
 	vec4 light_diffuse2( 0.5, 0.5, 0.5, 1.0 );
@@ -336,10 +343,10 @@ void init( )
 	vec4 light_specular1( 0.5, 0.5, 0.5, 1.0 );
 	vec4 light_specular2( 0.5, 0.5, 0.5, 1.0 );
 
-	vec4 material_diffuse = vec4( 0.07568, 0.61424, 0.07568, 1.0 );
-	vec4 material_ambient = vec4( 0.0215, 0.1745, 0.0215, 1.0 );
-	vec4 material_specular = vec4( 0.628281, 0.555802, 0.366065, 1.0 );
-	float material_shininess = 0.4;
+	vec4 material_diffuse = vec4( 1, 0.829, 0.829, 1.0 );
+	vec4 material_ambient = vec4( 0.25, 0.20725, 0.20725, 1.0 );
+	vec4 material_specular = vec4( 0.296648, 0.296648, 0.296648, 1.0 );
+	float material_shininess = 0.08;
 
 	vec4 diffuse_product1 = light_diffuse1 * material_diffuse;
 	vec4 diffuse_product2 = light_diffuse2 * material_diffuse;
@@ -378,7 +385,7 @@ void init( )
 
 	shading_type = glGetUniformLocation( program, "shading_type" );
 
-	glClearColor( 0.5, 0.5, 0.5, 1.0 );
+	glClearColor( 1.0, 1.0, 1.0, 1.0 );
 
 }
 
@@ -388,9 +395,8 @@ void displayMain( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );     // clear the window
 
-	glPointSize( 10.0 );
-    vec4  eye( radius*sin(theta), yVal, radius*cos(theta), 1.0 );
-	vec4  at( 0.0, 0.0,  0.0, 1.0 );
+    vec4  eye( radius*sin(theta)+0.4, yVal+0.1, radius*cos(theta)+0.3, 1.0 );
+	vec4  at( 0.4, 0.1, 0.3, 1.0 );
 	vec4 up( 0.0, 1.0, 0.0, 0.0 );
 
 	mat4 mv = LookAt( eye, at, up );
@@ -407,7 +413,12 @@ void displayMain( void )
 
 	glUniform1i( shading_type, shading );
 
-	glDrawArrays( GL_POINTS, 0, pointsSize);
+	glDrawArrays( GL_TRIANGLES, 0, pointsSize);
+	glPointSize( 6.0 );
+//	shading = 2;
+	glDrawArrays( GL_POINTS, pointsSize, controlsSize);
+
+
 
 	glutSwapBuffers();
 }
@@ -433,32 +444,176 @@ void reshapeMain( int width, int height )
 
 void keyboard( unsigned char key, int x, int y )
 {
-	GLfloat dr = 1.0 * DegreesToRadians;
     switch ( key ) {
     case 'q':
         exit( EXIT_SUCCESS );
         break;
-  	case 'r': 
+  	case 'x':
+		controls[CP-1].x += 0.22;
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 		break;
-  	case 'R': 
+  	case 'X': 
+		controls[CP-1].x -= 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 		break;
- 	case 'h': 
+ 	case 'y': 
+		controls[CP-1].y += 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 		break;
- 	case 'H': 
+ 	case 'Y': 
+		controls[CP-1].y -= 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 		break;
-  	case 'l': 
+  	case 'z': 
+		controls[CP-1].z += 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 		break;
-  	case 'L': 
+  	case 'Z': 
+		controls[CP-1].z -= 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 		break;
- 	case 'p': 
+ 	case '1': //decrease resolution
+		if(res > 10)
+			res -= 10;
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 		break;
- 	case 'P': 
-		break;
- 	case 't': 
-		break;
- 	case 'T': 
+ 	case '2': //increase resolution
+		res += 10;
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
 		break;
 	}
+	glutPostRedisplay();
+}
+
+//----------------------------------------------------------------------------
+
+void mainMenu( int id )
+{
+	glutPostRedisplay();
+}
+
+void projMenu( int id )
+{
+	switch( id ) {
+		case 1:
+			perspective = false;	
+			parallel = true;	
+			break;
+		case 2:
+			parallel = false;	
+			perspective = true;	
+			break;
+	}
+
+	glutPostRedisplay();
+}
+
+
+void animMenu( int id )
+{
+	switch( id ) {
+		case 1:
+			glutIdleFunc( NULL );
+			break;
+		case 2:
+			glutIdleFunc( idleMain );
+			break;
+	}
+
+	glutPostRedisplay();
+}
+
+void shadMenu( int id )
+{
+	switch( id ) {
+		case 1:
+			shading = 0;
+			break;
+		case 2:
+			shading = 1;	
+			break;
+	}
+
+	glutPostRedisplay();
+}
+
+void CPMenu( int id )
+{
+	switch( id ) {
+		case 1:
+			CP = 1;
+			break;
+		case 2:
+			CP = 2;
+			break;
+		case 3:
+			CP = 3;
+			break;
+		case 4:
+			CP = 4;
+			break;
+		case 5:
+			CP = 5;
+			break;
+		case 6:
+			CP = 6;
+			break;
+		case 7:
+			CP = 7;
+			break;
+		case 8:
+			CP = 8;
+			break;
+		case 9:
+			CP = 9;
+			break;
+		case 10:
+			CP = 10;
+			break;
+		case 11:
+			CP = 11;
+			break;
+		case 12:
+			CP = 12;
+			break;
+		case 13:
+			CP = 13;
+			break;
+		case 14:
+			CP = 14;
+			break;
+		case 15:
+			CP = 15;
+			break;
+		case 16:
+			CP = 16;
+			break;
+	}
+
 	glutPostRedisplay();
 }
 
@@ -485,6 +640,43 @@ int main( int argc, char **argv )
     glewInit(); 
 
     init();
+
+	int projectionMenu = glutCreateMenu( projMenu );
+	glutAddMenuEntry( "Parallel", 1 );
+	glutAddMenuEntry( "Perspective", 2 );
+
+	int shadingMenu = glutCreateMenu( shadMenu );
+	glutAddMenuEntry( "Phong", 1 );
+	glutAddMenuEntry( "Flat", 2 );
+
+	int animationMenu = glutCreateMenu( animMenu );
+	glutAddMenuEntry( "Stop Animation", 1 );
+	glutAddMenuEntry( "Start Animation", 2 );
+
+	int controlMenu = glutCreateMenu( CPMenu );
+	glutAddMenuEntry( "1", 1 );
+	glutAddMenuEntry( "2", 2 );
+	glutAddMenuEntry( "3", 3 );
+	glutAddMenuEntry( "4", 4 );
+	glutAddMenuEntry( "5", 5 );
+	glutAddMenuEntry( "6", 6 );
+	glutAddMenuEntry( "7", 7 );
+	glutAddMenuEntry( "8", 8 );
+	glutAddMenuEntry( "9", 9 );
+	glutAddMenuEntry( "10", 10 );
+	glutAddMenuEntry( "11", 11 );
+	glutAddMenuEntry( "12", 12 );
+	glutAddMenuEntry( "13", 13 );
+	glutAddMenuEntry( "14", 14 );
+	glutAddMenuEntry( "15", 15 );
+	glutAddMenuEntry( "16", 16 );
+
+	glutCreateMenu( mainMenu ); // Set up menu
+	glutAddSubMenu( "Projection", projectionMenu );
+	glutAddSubMenu( "Shading", shadingMenu );
+	glutAddSubMenu( "Animation", animationMenu );
+	glutAddSubMenu( "Controls", controlMenu );
+	glutAttachMenu( GLUT_RIGHT_BUTTON );
 
 	glutIdleFunc( idleMain );
     glutDisplayFunc( displayMain );
