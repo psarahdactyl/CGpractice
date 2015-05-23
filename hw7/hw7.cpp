@@ -67,6 +67,9 @@ float cameraSpeed = 0.5;
 // Control Point selection
 int CP = 0;
 
+// Control Point size
+float CPsize = 4.0;
+
 // Viewing options
 bool parallel = true;
 bool perspective = false;
@@ -414,9 +417,9 @@ void displayMain( void )
 	glUniform1i( shading_type, shading );
 
 	glDrawArrays( GL_TRIANGLES, 0, pointsSize);
-	glPointSize( 6.0 );
+	glPointSize( CPsize );
 //	shading = 2;
-	glDrawArrays( GL_POINTS, pointsSize, controlsSize);
+	glDrawArrays( GL_POINTS, pointsSize+1, controlsSize);
 
 
 
@@ -504,6 +507,12 @@ void keyboard( unsigned char key, int x, int y )
 		loadBuffer();
 		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
 						   BUFFER_OFFSET(sizeof(*points)*pointsSize));
+		break;
+  	case 's':
+		CPsize += 1.0;
+		break;
+  	case 'S':
+		CPsize -= 1.0;
 		break;
 	}
 	glutPostRedisplay();
@@ -625,9 +634,29 @@ int main( int argc, char **argv )
 	makeVertices( argv[1] );
 
 	cout << endl;
+	cout << "---------------------" << endl;
 	cout << "INSTRUCTIONS FOR KEYS" << endl;
-	cout << "'q' -  quits the program" << endl;
+	cout << "---------------------" << endl;
+	cout << "Right click to see a nice drop down menu!" << endl;
 	cout << endl;
+	cout << "Use the drop down to select a control point then press the keys below:" << endl;
+	cout << "'x (lowercase)' - increases the control point in the x-direction " << endl;
+	cout << "'X (uppercase)' - decreases the control point in the x-direction " << endl;
+	cout << "'y (lowercase)' - increases the control point in the y-direction " << endl;
+	cout << "'Y (uppercase)' - decreases the control point in the y-direction " << endl;
+	cout << "'z (lowercase)' - increases the control point in the z-direction " << endl;
+	cout << "'Z (uppercase)' - decreases the control point in the z-direction " << endl;
+	cout << endl;
+	cout << "'s (lowercase)' - increases size of all control points " << endl;
+	cout << "'S (uppercase)' - decreases size of all control points " << endl;
+	cout << endl;
+	cout << "'1' - decreases resolution " << endl;
+	cout << "'2' - increases resolution " << endl;
+	cout << endl;
+	cout << "The drop down menu can also be used for starting/stopping the animation." << endl;
+	cout << "Shading can be changed from flat to smooth also." << endl;
+	cout << endl;
+	cout << "'q' -  quits the program" << endl;
 	cout << endl;
 
     glutInit( &argc, argv );
