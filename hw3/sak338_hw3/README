@@ -1,0 +1,16 @@
+Sarah Kushner
+sak338@drexel.edu
+CS 432
+Assignment 3
+
+PLATFORM:
+I developed and tested this in Ubuntu 14.04.
+
+INSTRUCTIONS:
+Running "make hw3" will build the first program.
+Then "./hw3" runs it.
+
+NOTES:
+The drop down menu containing the Stop and Start Animation is only accesible from the main window.
+Pressing single letter keys to change colors only works if the second window is "in focus."
+
