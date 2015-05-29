@@ -1,0 +1,28 @@
+Sarah Kushner
+sak338@drexel.edu
+CS 432
+Assignment 8
+
+PLATFORM:
+I developed and tested this in Ubuntu 14.04.
+
+INSTRUCTIONS:
+Running "make hw8" will build the program. Then you can run it with "./hw8".
+
+Alternatively, typing "make run" will build the program if it doesn't already exist and run the program.
+
+
+INSTRUCTIONS FOR KEYS:
+'q' -  quits the program
+
+'=' -  rotates camera counter-clockwise
+'-' -  rotates camera clockwise
+'r' -  increases orbit radius
+'R' -  decreases orbit radius
+'h' -  increases height of camera on cylinder
+'H' -  decreases height of camera on cylinder
+'a' -  toggles anti-aliasing
+
+'z' -  resets all transformations
+
+Clicking on an object once will make it brighter, then clicking it a second time will put it back to its original color.
