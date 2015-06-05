@@ -6,8 +6,9 @@ OPTIONS=$(GCC_OPTIONS) $(GL_OPTIONS)
 .cpp: 
 	g++ $@.cpp Common/InitShader.o $(OPTIONS) -o $@  
 
-run1: hw9-1 
-	./hw9-1 bound-bunny_5k.smf
+run1: hw9-1
+	./hw9-1 patchPoints.txt
 
-run2: hw9-2
-	./hw9-2 patchPoints.txt
+run2: hw9-2 
+	./hw9-2 bound-bunny_5k.smf
+

@@ -7,4 +7,11 @@ PLATFORM:
 I developed and tested this in Ubuntu 14.04.
 
 INSTRUCTIONS:
+Type "make run1" to run the Bezier patch assignment (hw7) with the new texture.
+Type "make run2" to run the rotating shaded model (hw6) with the procedurally generated texture.
+
+Instructions for keys and menus to access other functionality is output to the console upon running the programs.
+
+NOTE:
+The 3D texture could use some optimization (but of course I don't have time) so, that one takes a little longer to start up. But it's there! Just wait a second.
 

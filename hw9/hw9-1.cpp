@@ -1,6 +1,7 @@
 // Sarah Kushner
 // CS 432
-// Assignment 4
+// Assignment 9 part 1
+// Assignment 7 with a 2D texture map
 
 #include "Angel.h"
 #include <iostream>
@@ -12,34 +13,49 @@
 #include <iterator>
 #include <map>
 #include <stdexcept>
+#include <math.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 using namespace std;
 
-// Globals, i'm so sorry
-GLuint program;
+// Globals, I'm so sorry
 
 // Point and Color arrays
 vec4* points;
-vec4* colors; 
+vec4* pointss;
+vec4* controls;
 vec4* vertices;
 vec3* normals;
+vec2* tex_coords;
+vec4* axes;
+int controlsSize;
 int verticesSize;
 int pointsSize;
+int pointssSize;
+
+// Texture 
+//GLubyte my_texels[512][512][3];
+int texture;
+
+//Resolution
+int res = 10;
+int triIndex = 0;
 
 // Viewing matrices
 GLuint model_view;  // model-view matrix uniform shader variable location
 GLuint projection; // projection matrix uniform shader variable location
 
+// VAO stuff
+GLuint vNormal;
+GLuint vPosition;
+GLuint vTexCoord;
+
 // Shader options
-// gouraud is 0, phong is 1
+// phong is 0, flat is 1, neither is 2
 GLint shading_type;
 int shading = 0;
-
-// Material Options
-vec4 material_diffuse;
-vec4 material_ambient;
-vec4 material_specular;
-float material_shininess;
 
 // Projection transformation
 mat4 p; // projection matrix
@@ -54,13 +70,15 @@ GLfloat aspect;       // Viewport aspect ratio
 
 GLfloat radius = 1.0;
 GLfloat theta = 0.0;
-GLfloat yVal = 0.5;
+GLfloat yVal = 0.3;
 
-GLfloat radiusLight = 0.7;
-GLfloat thetaLight = 0.0;
-GLfloat yValLight = 0.5;
+float cameraSpeed = 0.5;
 
-float cameraSpeed = 1.0;
+// Control Point selection
+int CP = 0;
+
+// Control Point size
+float CPsize = 4.0;
 
 // Viewing options
 bool parallel = true;
@@ -85,7 +103,7 @@ struct vec4Compare
 
 map<vec4, vector<vec3>*, vec4Compare> vertexNormals;
 
-//--------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 
 vec3 getNormal(int a, int b, int c)
 {
@@ -113,19 +131,22 @@ void addToMap( vec4 key, vec3 value )
 	}
 }
 
-int Index = 0;
+//--------------------------------------------------------------------------
+
 void tri( int a, int b, int c )
 {
 	vec3 normal = getNormal(a, b, c);
-	points[Index] = vertices[a];
+	pointss[triIndex] = vertices[a];
 	addToMap(vertices[a], normal);
-	Index++;
-	points[Index] = vertices[b];
+	triIndex++;
+
+	pointss[triIndex] = vertices[b];
 	addToMap(vertices[b], normal);
-	Index++;
-	points[Index] = vertices[c];
+	triIndex++;
+
+	pointss[triIndex] = vertices[c];
 	addToMap(vertices[c], normal);
-	Index++;
+	triIndex++;
 }
 
 //--------------------------------------------------------------------------
@@ -139,6 +160,103 @@ vec3 getVertexNormal( vec4 point )
 		sum += vNorms->at(i);
 	}
 	return normalize( sum );
+}
+
+//--------------------------------------------------------------------------
+
+float b(int i, float u)
+{
+	float bu;
+
+	if(i == 0)
+		bu = pow((1-u), 3);
+	else if(i == 1)
+		bu = 3 * u * pow( (1 - u), 2 ); 
+	else if(i == 2)
+		bu = 3 * pow( u, 2 ) * (1 - u);
+	else if(i == 3)
+		bu = pow( u, 3 );
+
+	return bu;
+}
+
+//--------------------------------------------------------------------------
+
+void createPatch()
+{
+	vertexNormals.clear();
+	triIndex = controlsSize+6;
+
+	verticesSize = res * res;
+	int numFaces = 2 * (verticesSize - 2 * res + 1);
+	pointsSize = numFaces * 3;
+
+	vertices = new vec4[verticesSize];
+	tex_coords = new vec2[pointsSize];
+	normals = new vec3[pointsSize];
+	points = new vec4[pointsSize+controlsSize+6];
+	pointss	= new vec4[pointsSize+controlsSize+6];
+
+
+	int contIndex = 0;
+	for(int i = 0; i < controlsSize; i++)
+	{
+		pointss[i] = controls[contIndex];
+		contIndex++;
+	}
+
+	axes = new vec4[6];
+	axes[0] = vec4(0.0, 0.0, 0.0, 1.0);
+	axes[1] = vec4(5.0, 0.0, 0.0, 1.0);
+	axes[2] = vec4(0.0, 0.0, 0.0, 1.0);
+	axes[3] = vec4(0.0, 5.0, 0.0, 1.0);
+	axes[4] = vec4(0.0, 0.0, 0.0, 1.0);
+	axes[5] = vec4(0.0, 0.0, 5.0, 1.0);
+
+	int axesIndex = 0;
+	for(int i = controlsSize; i < controlsSize+6; i++)
+	{		
+		pointss[i] = axes[axesIndex];
+		axesIndex++;
+	}
+
+
+	int vertIndex = 0;
+	float inc = 1/((float)res-1);
+	for(float u = 0; u <= 1.0+inc/2; u+=inc)
+	{
+		for(float v = 0; v <= 1.0+inc/2; v+=inc)
+		{
+			for(int i = 0; i <= 3; i++)
+			{
+				float bu = b(i, u);
+				for(int j = 0; j <= 3; j++)
+				{ 
+					// b(u) * b(v) * pij
+					int ij = 4*i+j;
+					float bv = b(j, v);
+					vec4 sumPoint;
+					sumPoint = bu * bv * controls[ij];
+					vertices[vertIndex] += sumPoint;
+				}
+			}
+			vertIndex++;
+		}
+	}
+
+	for(int i = 0; i < (vertIndex-res); i++)
+	{
+		if((i+1) % res == 0)
+			continue;
+
+		tri(i, i+res, i+1);
+		tri(i+1, i+res, i+res+1);
+	}
+
+	for(int i = 0; i < pointsSize; i++)
+	{
+		normals[i] = getVertexNormal( points[i] );
+	}
 }
 
 //--------------------------------------------------------------------------
@@ -164,18 +282,11 @@ void makeVertices( char * filename )
 
 		if(tokens.size() == 0)
 			continue;
-		else if(tokens.at(0) == "v")
-			verticesSize++;
-		else if(tokens.at(0) == "f")
-			pointsSize++;
+		else
+			controlsSize++;
 	}
 
-	pointsSize *= 3;
-
-	vertices = new vec4[verticesSize];
-	normals = new vec3[pointsSize];
-	points = new vec4[pointsSize];
-	colors = new vec4[pointsSize];
+	controls = new vec4[controlsSize];
 
 	myfile.close();
 	myfile.open( filename );
@@ -192,37 +303,22 @@ void makeVertices( char * filename )
 		if(tokens.size() == 0)
 			continue;
 
-		else if(tokens.at(0) == "v")
+		else
 		{
 			float x, y, z;
-			stringstream datax(tokens.at(1));
+			stringstream datax(tokens.at(0));
 			datax >> x;
-			stringstream datay(tokens.at(2));
+			stringstream datay(tokens.at(1));
 			datay >> y;
-			stringstream dataz(tokens.at(3));
+			stringstream dataz(tokens.at(2));
 			dataz >> z;
-			vertices[i] = vec4(x, y, z, 1.0);
+			controls[i] = vec4(x/7, y/7, z/7, 1.0);
 			i++;
 		}
-		else if(tokens.at(0) == "f")
-		{
-			int v1, v2, v3;	
-			stringstream datav1(tokens.at(1));
-			datav1 >> v1;
-			stringstream datav2(tokens.at(2));
-			datav2 >> v2;
-			stringstream datav3(tokens.at(3));
-			datav3 >> v3;
+	}
 
-			tri(v1-1, v2-1, v3-1);
-		}
-	}
-	cout << "does this take " << endl;
-	for(int i = 0; i < pointsSize; i++)
-	{
-		normals[i] = getVertexNormal( points[i] );
-	}
-	cout << "forver? " << endl;
+	createPatch();
+
 }
 
 //--------------------------------------------------------------------------
@@ -230,23 +326,69 @@ void makeVertices( char * filename )
 void loadBuffer( void )
 {
 	// Load array into buffer
-	glBufferData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize +
+	glBufferData( GL_ARRAY_BUFFER, sizeof(*pointss)*(pointsSize+controlsSize+6) +
 							 sizeof(*normals)*pointsSize, NULL, GL_STATIC_DRAW );
-	glBufferSubData( GL_ARRAY_BUFFER, 0,
-							  sizeof(*points)*pointsSize, points );
-	glBufferSubData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize,
-							   sizeof(*normals)*pointsSize, normals );
 
+	glBufferSubData( GL_ARRAY_BUFFER, 0,
+							  sizeof(*pointss)*(pointsSize+controlsSize+6), pointss );
+
+	glBufferSubData( GL_ARRAY_BUFFER, sizeof(*pointss)*(pointsSize+controlsSize+6),
+							   sizeof(*normals)*pointsSize, normals );
 
 }
 
 //--------------------------------------------------------------------------
 
-void changeMaterial( GLuint program )
+void init( )
 {
+	// Initialization
+	GLuint vao, buffer, tex;
+
+	// Create a vertex array object
+	glGenVertexArrays( 1, &vao );
+    glBindVertexArray( vao );
+
+    // Create and initialize a buffer object
+    glGenBuffers( 1, &buffer );
+    glBindBuffer( GL_ARRAY_BUFFER, buffer );
+
+	// Create and initialize a texture object
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
+	int x, y, comp;
+	unsigned char *my_texels = stbi_load("spongebob.png", &x, &y, &comp, 4);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, my_texels);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+ 	glActiveTexture( GL_TEXTURE0 );
+
+	stbi_image_free( my_texels );
+
+	// Load array into buffer
+	loadBuffer();
+
+	// Load shaders and use the resulting shader program
+	GLuint program = InitShader( "vshdr1.glsl", "fshdr1.glsl" );
+	glUseProgram( program );
+
+	// Set up vertex arrays
+	vPosition = glGetAttribLocation( program, "vPosition" );
+	glEnableVertexAttribArray( vPosition );
+	glVertexAttribPointer( vPosition, 4, GL_FLOAT, GL_FALSE, 0,
+					    BUFFER_OFFSET(0) );
+
+	vNormal = glGetAttribLocation( program, "vNormal" );
+	glEnableVertexAttribArray( vNormal );
+	glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
+
+	glUniform1i( glGetUniformLocation(program, "texture"), 0 ); 	
+
 	// Initialize shader lighting parameters
-	vec4 light_position1( radius*sin(theta), yVal, radius*cos(theta), 1.0 );
-	vec4 light_position2( radiusLight*sin(thetaLight), yValLight, radiusLight*cos(thetaLight), 1.0 );
+	vec4 light_position1( 0.4, 0.1, 0.4, 1.0 );
+	vec4 light_position2( 0.7, 0.4, 0.2, 1.0 );
 
 	vec4 light_diffuse1( 0.5, 0.5, 0.5, 1.0 );
 	vec4 light_diffuse2( 0.5, 0.5, 0.5, 1.0 );
@@ -255,12 +397,18 @@ void changeMaterial( GLuint program )
 	vec4 light_specular1( 0.5, 0.5, 0.5, 1.0 );
 	vec4 light_specular2( 0.5, 0.5, 0.5, 1.0 );
 
+	vec4 material_diffuse = vec4( 1, 0.829, 0.829, 1.0 );
+	vec4 material_ambient = vec4( 0.25, 0.20725, 0.20725, 1.0 );
+	vec4 material_specular = vec4( 0.296648, 0.296648, 0.296648, 1.0 );
+	float material_shininess = 0.08;
+
 	vec4 diffuse_product1 = light_diffuse1 * material_diffuse;
 	vec4 diffuse_product2 = light_diffuse2 * material_diffuse;
 	vec4 ambient_product1 = light_ambient1 * material_ambient;
 	vec4 ambient_product2 = light_ambient2 * material_ambient;
 	vec4 specular_product1 = light_specular1 * material_specular;
 	vec4 specular_product2 = light_specular2 * material_specular;
+
 
 	// Uniforms
 	glUniform4fv( glGetUniformLocation(program, "DiffuseProduct1"),
@@ -290,51 +438,8 @@ void changeMaterial( GLuint program )
 	projection = glGetUniformLocation( program, "projection" );
 
 	shading_type = glGetUniformLocation( program, "shading_type" );
-}
 
-//--------------------------------------------------------------------------
-
-void init( )
-{
-
-	// Initialization
-	GLuint vao, buffer;
-
-	// Create a vertex array object
-	glGenVertexArrays( 1, &vao );
-    glBindVertexArray( vao );
-
-    // Create and initialize a buffer object
-    glGenBuffers( 1, &buffer );
-    glBindBuffer( GL_ARRAY_BUFFER, buffer );
-
-	// Load array into buffer
-	loadBuffer();
-
-	// Load shaders and use the resulting shader program
-	program = InitShader( "vshdr.glsl", "fshdr.glsl" );
-	glUseProgram( program );
-
-	// Set up vertex arrays
-	GLuint vPosition = glGetAttribLocation( program, "vPosition" );
-	glEnableVertexAttribArray( vPosition );
-	glVertexAttribPointer( vPosition, 4, GL_FLOAT, GL_FALSE, 0,
-					    BUFFER_OFFSET(0) );
-
-	GLuint vNormal = glGetAttribLocation( program, "vNormal" );
-	glEnableVertexAttribArray( vNormal );
-	glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
-						   BUFFER_OFFSET(sizeof(*points)*pointsSize) );
-
-
-	material_diffuse = vec4( 0.07568, 0.61424, 0.07568, 1.0 );
-	material_ambient = vec4( 0.0215, 0.1745, 0.0215, 1.0 );
-	material_specular = vec4( 0.628281, 0.555802, 0.366065, 1.0 );
-	material_shininess = 0.4;
-
-	changeMaterial( program );
-
-	glClearColor( 0.0, 0.0, 0.0, 1.0 );
+	glClearColor( 1.0, 1.0, 1.0, 1.0 );
 
 }
 
@@ -344,8 +449,8 @@ void displayMain( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );     // clear the window
 
-    vec4  eye( radius*sin(theta), yVal, radius*cos(theta), 1.0 );
-	vec4  at( 0.0, 0.0, 0.0, 1.0 );
+    vec4  eye( radius*sin(theta)+0.4, yVal+0.1, radius*cos(theta)+0.3, 1.0 );
+	vec4  at( 0.4, 0.1, 0.3, 1.0 );
 	vec4 up( 0.0, 1.0, 0.0, 0.0 );
 
 	mat4 mv = LookAt( eye, at, up );
@@ -362,7 +467,13 @@ void displayMain( void )
 
 	glUniform1i( shading_type, shading );
 
-	glDrawArrays( GL_TRIANGLES, 0, pointsSize);
+	glDrawArrays( GL_POINTS, 0, controlsSize );
+	glDrawArrays( GL_LINE_STRIP, controlsSize, 2 );
+	glDrawArrays( GL_LINE_STRIP, controlsSize+2, 2 );
+	glDrawArrays( GL_LINE_STRIP, controlsSize+4, 2 );
+	glDrawArrays( GL_TRIANGLES, controlsSize+6, pointsSize);
+
+	glPointSize( CPsize );
 
 	glutSwapBuffers();
 }
@@ -388,67 +499,72 @@ void reshapeMain( int width, int height )
 
 void keyboard( unsigned char key, int x, int y )
 {
-	GLfloat dr = 1.0 * DegreesToRadians;
     switch ( key ) {
     case 'q':
         exit( EXIT_SUCCESS );
         break;
-  	case '+': 
-		cameraSpeed += 0.5; 
+  	case 'x':
+		controls[CP-1].x += 0.22;
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
 		break;
-  	case '-': 
-		cameraSpeed -= 0.5; 
+  	case 'X': 
+		controls[CP-1].x -= 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
 		break;
-  	case 'r': 
-		radius *= 1.5; 
+ 	case 'y': 
+		controls[CP-1].y += 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
 		break;
-  	case 'R': 
-		radius *= 0.667; 
+ 	case 'Y': 
+		controls[CP-1].y -= 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
 		break;
- 	case 'h': 
-		yVal += dr;	
+  	case 'z': 
+		controls[CP-1].z += 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
 		break;
- 	case 'H': 
-		yVal -= dr; 
+  	case 'Z': 
+		controls[CP-1].z -= 0.22;	
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
 		break;
-  	case 'l': 
-		radiusLight *= 1.5; 
-		changeMaterial( program );
+ 	case '1': //decrease resolution
+		if(res > 3)
+			res -= 2;
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
 		break;
-  	case 'L': 
-		radiusLight *= 0.667; 
-		changeMaterial( program );
+ 	case '2': //increase resolution
+		res += 2;
+		createPatch();
+		loadBuffer();
+		glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0,
+						   BUFFER_OFFSET(sizeof(*pointss)*(pointsSize+controlsSize+6)));
 		break;
- 	case 'p': 
-		yValLight += dr; 
-		changeMaterial( program );
+  	case 's':
+		CPsize += 1.0;
 		break;
- 	case 'P': 
-		yValLight -= dr; 
-		changeMaterial( program );
-		break;
- 	case 't': 
-		thetaLight += 3*dr; 
-		changeMaterial( program );
-		break;
- 	case 'T': 
-		thetaLight -= 3*dr; 
-		changeMaterial( program );
-		break;
-	case 'z':  // reset values to their defaults
-		leftA = -1.0;
-		rightA = 1.0;
-		bottom = -1.0;
-		top = 1.0;
-		zNear = 0.5;
-		zFar = 3.0;
-		radius = 1.0;
-		theta = 0.0;
-		yVal = 1.0;
-		radiusLight = 0.7;
-		thetaLight = 0.0;
-		yValLight = 0.5;
-		changeMaterial( program );
+  	case 'S':
+		CPsize -= 1.0;
 		break;
 	}
 	glutPostRedisplay();
@@ -506,32 +622,56 @@ void shadMenu( int id )
 	glutPostRedisplay();
 }
 
-void matMenu( int id )
+void CPMenu( int id )
 {
 	switch( id ) {
 		case 1:
-			// Gold
-			material_diffuse = vec4( 0.75164, 0.60648, 0.22648, 1.0 );
-			material_ambient = vec4( 0.24725, 0.1995, 0.0745, 1.0 );
-			material_specular = vec4( 0.633, 0.727811, 0.633, 1.0 );
-			material_shininess = 0.6;
-			changeMaterial( program );
+			CP = 1;
 			break;
 		case 2:
-			// Emerald
-			material_diffuse = vec4( 0.07568, 0.61424, 0.07568, 1.0 );
-			material_ambient = vec4( 0.0215, 0.1745, 0.0215, 1.0 );
-			material_specular = vec4( 0.628281, 0.555802, 0.366065, 1.0 );
-			material_shininess = 0.4;
-			changeMaterial( program );
+			CP = 2;
 			break;
 		case 3:
-			// Metal
-			material_diffuse = vec4( 0.780392, 0.568627, 0.113725, 1.0 );
-			material_ambient = vec4( 0.329412, 0.223529, 0.027451, 1.0 );
-			material_specular = vec4( 0.992157, 0.941176, 0.807843, 1.0 );
-			material_shininess = 0.21794872;
-			changeMaterial( program );
+			CP = 3;
+			break;
+		case 4:
+			CP = 4;
+			break;
+		case 5:
+			CP = 5;
+			break;
+		case 6:
+			CP = 6;
+			break;
+		case 7:
+			CP = 7;
+			break;
+		case 8:
+			CP = 8;
+			break;
+		case 9:
+			CP = 9;
+			break;
+		case 10:
+			CP = 10;
+			break;
+		case 11:
+			CP = 11;
+			break;
+		case 12:
+			CP = 12;
+			break;
+		case 13:
+			CP = 13;
+			break;
+		case 14:
+			CP = 14;
+			break;
+		case 15:
+			CP = 15;
+			break;
+		case 16:
+			CP = 16;
 			break;
 	}
 
@@ -546,39 +686,29 @@ int main( int argc, char **argv )
 	makeVertices( argv[1] );
 
 	cout << endl;
+	cout << "---------------------" << endl;
 	cout << "INSTRUCTIONS FOR KEYS" << endl;
+	cout << "---------------------" << endl;
+	cout << "Right click to see a nice drop down menu!" << endl;
+	cout << endl;
+	cout << "Use the drop down to select a control point then press the keys below:" << endl;
+	cout << "'x (lowercase)' - increases the control point in the x-direction " << endl;
+	cout << "'X (uppercase)' - decreases the control point in the x-direction " << endl;
+	cout << "'y (lowercase)' - increases the control point in the y-direction " << endl;
+	cout << "'Y (uppercase)' - decreases the control point in the y-direction " << endl;
+	cout << "'z (lowercase)' - increases the control point in the z-direction " << endl;
+	cout << "'Z (uppercase)' - decreases the control point in the z-direction " << endl;
+	cout << endl;
+	cout << "'s (lowercase)' - increases size of all control points " << endl;
+	cout << "'S (uppercase)' - decreases size of all control points " << endl;
+	cout << endl;
+	cout << "'1' - decreases resolution " << endl;
+	cout << "'2' - increases resolution " << endl;
+	cout << endl;
+	cout << "The drop down menu can also be used for starting/stopping the animation." << endl;
+	cout << "Shading can be changed from flat to smooth also." << endl;
+	cout << endl;
 	cout << "'q' -  quits the program" << endl;
-	cout << endl;
-	cout << "'+' -  increases speed of rotation" << endl;
-	cout << "'-' -  decreases speed of rotation" << endl;
-	cout << "'r' -  increases orbit radius" << endl;
-	cout << "'R' -  decreases orbit radius" << endl;
-	cout << "'h' -  increases height of camera on cylinder" << endl;
-	cout << "'H' -  decreases height of camera on cylinder" << endl;
-	cout << endl;
-	cout << "'t' -  rotates light around model on cylinder counter-clockwise" << endl;
-	cout << "'T' -  rotates light around model on cylinder clockwise" << endl;
-	cout << "'l' -  increases orbit radius of light" << endl;
-	cout << "'L' -  decreases orbit radius of light" << endl;
-	cout << "'p' -  increases height of light on cylinder" << endl;
-	cout << "'P' -  decreases height of light on cylinder" << endl;
-	cout << endl;
-	cout << "'z' -  resets all transformations" << endl;
-	cout << endl;
-	cout << "DROP DOWN MENUS" << endl;
-	cout << "-Projections" << endl;
-	cout << "  -Parallel" << endl;
-	cout << "  -Perspective" << endl;
-	cout << "-Materials" << endl;
-	cout << "  -Gold" << endl;
-	cout << "  -Emerald" << endl;
-	cout << "  -Brass" << endl;
-	cout << "-Shading" << endl;
-	cout << "  -Gouraud" << endl;
-	cout << "  -Phong" << endl;
-	cout << "-Animation" << endl;
-	cout << "  -Start Animation" << endl;
-	cout << "  -Stop Animation" << endl;
 	cout << endl;
 
     glutInit( &argc, argv );
@@ -586,7 +716,7 @@ int main( int argc, char **argv )
     glutInitWindowSize( 500, 500 );
 
 	// Main Window
-    mainWin = glutCreateWindow( "MODELS AND SHADING, YO." );
+    mainWin = glutCreateWindow( "Dude, it's a Bezier Patch!" );
     glewExperimental=GL_TRUE; 
     glewInit(); 
 
@@ -596,24 +726,37 @@ int main( int argc, char **argv )
 	glutAddMenuEntry( "Parallel", 1 );
 	glutAddMenuEntry( "Perspective", 2 );
 
-	int materialsMenu = glutCreateMenu( matMenu );
-	glutAddMenuEntry( "Gold", 1 );
-	glutAddMenuEntry( "Emerald", 2 );
-	glutAddMenuEntry( "Brass", 3 );
-
 	int shadingMenu = glutCreateMenu( shadMenu );
-	glutAddMenuEntry( "Gouraud", 1 );
-	glutAddMenuEntry( "Phong", 2 );
+	glutAddMenuEntry( "Phong", 1 );
+	glutAddMenuEntry( "Flat", 2 );
 
 	int animationMenu = glutCreateMenu( animMenu );
 	glutAddMenuEntry( "Stop Animation", 1 );
 	glutAddMenuEntry( "Start Animation", 2 );
 
+	int controlMenu = glutCreateMenu( CPMenu );
+	glutAddMenuEntry( "1", 1 );
+	glutAddMenuEntry( "2", 2 );
+	glutAddMenuEntry( "3", 3 );
+	glutAddMenuEntry( "4", 4 );
+	glutAddMenuEntry( "5", 5 );
+	glutAddMenuEntry( "6", 6 );
+	glutAddMenuEntry( "7", 7 );
+	glutAddMenuEntry( "8", 8 );
+	glutAddMenuEntry( "9", 9 );
+	glutAddMenuEntry( "10", 10 );
+	glutAddMenuEntry( "11", 11 );
+	glutAddMenuEntry( "12", 12 );
+	glutAddMenuEntry( "13", 13 );
+	glutAddMenuEntry( "14", 14 );
+	glutAddMenuEntry( "15", 15 );
+	glutAddMenuEntry( "16", 16 );
+
 	glutCreateMenu( mainMenu ); // Set up menu
 	glutAddSubMenu( "Projection", projectionMenu );
-	glutAddSubMenu( "Materials", materialsMenu );
 	glutAddSubMenu( "Shading", shadingMenu );
 	glutAddSubMenu( "Animation", animationMenu );
+	glutAddSubMenu( "Controls", controlMenu );
 	glutAttachMenu( GLUT_RIGHT_BUTTON );
 
 	glutIdleFunc( idleMain );
@@ -621,7 +764,7 @@ int main( int argc, char **argv )
     glutReshapeFunc( reshapeMain );
     glutKeyboardFunc( keyboard );
 	glEnable(GL_DEPTH_TEST);
-	glShadeModel(GL_SMOOTH);
+	glEnable(GL_TEXTURE_2D);
 
 	// Run
     glutMainLoop();
