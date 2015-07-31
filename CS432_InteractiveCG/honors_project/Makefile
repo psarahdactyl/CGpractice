@@ -7,4 +7,4 @@ OPTIONS=$(GCC_OPTIONS) $(GL_OPTIONS)
 	g++ $@.cpp Common/InitShader.o $(OPTIONS) -o $@  
 
 run: fireapp
-	./fireapp	
+	./fireapp

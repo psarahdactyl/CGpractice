@@ -1,118 +1,78 @@
 // Sarah Kushner
 // CS 432
-// Assignment 4
+// Extra Credit / Honors Assignment
+
+#define MAX_NUM_PARTICLES 16000
+#define MIN_NUM_PARTICLES 500
+#define INITIAL_NUM_PARTICLES 2000
+#define INITIAL_SPEED 1.0
+#define NUM_COLORS 8
+#define FALSE 0
+#define TRUE 1
 
 #include "Angel.h"
 #include <iostream>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 using namespace std;
-
-// Point and Color arrays
-vec4 points[36];
-vec4 colors[36]; 
-
-static unsigned int NumVertices;
-
-// Transformation bools for each
-bool scaleEnabled = false;
-bool rotateEnabled = false;
-bool translateEnabled = false;
-// Matrix
-mat4 s;
-mat4 rx;
-mat4 ry;
-mat4 rz;
-mat4 t;
-
-// Shader variables
-GLuint scaleLoc;
-GLuint rotateLocX;
-GLuint rotateLocY;
-GLuint rotateLocZ;
-GLuint translateLoc;
-
-GLfloat vector[3];
-GLfloat matrix[16];
-
-// x,y,z values, delta, theta
-GLfloat xscale = 1.0;
-GLfloat yscale = 1.0;
-GLfloat zscale = 1.0;
-
-GLfloat xrotate = 1.0;
-GLfloat yrotate = 1.0;
-GLfloat zrotate = 1.0;
-
-GLfloat xtranslate = 0.0;
-GLfloat ytranslate = 0.0;
-GLfloat ztranslate = 0.0;
-
-GLfloat xtheta = 0.0;
-GLfloat ytheta = 0.0;
-GLfloat ztheta = 0.0;
-
-GLfloat scaledelta = 0.25;
-GLfloat thetadelta = M_PI/4;
-GLfloat translatedelta = 0.25;
-
-
-// Vertices of a unit cube centered at origin
-// sides aligned with axes
-static vec4 vertices[8] = {
-	vec4( -0.5, -0.5, 0.5, 1.0 ),
-	vec4( -0.5, 0.5, 0.5, 1.0 ),
-	vec4( 0.5, 0.5, 0.5, 1.0 ),
-	vec4( 0.5, -0.5, 0.5, 1.0 ),
-	vec4( -0.5, -0.5, -0.5, 1.0 ),
-	vec4( -0.5, 0.5, -0.5, 1.0 ),
-	vec4( 0.5, 0.5, -0.5, 1.0 ),
-	vec4( 0.5, -0.5, -0.5, 1.0 )
-}; 
-
-vec4 vertices_original[8] = vertices;
 
 // RGBA colors
 static vec4 vertex_colors[8] = {
-	vec4( 0.0, 0.0, 0.0, 1.0 ), // black
+	vec4( 0.63, 0.63, 0.63, 1.0 ), // grey
 	vec4( 1.0, 0.0, 0.0, 1.0 ), // red
 	vec4( 1.0, 1.0, 0.0, 1.0 ), // yellow
-	vec4( 0.0, 1.0, 0.0, 1.0 ), // green
-	vec4( 0.0, 0.0, 1.0, 1.0 ), // blue
-	vec4( 1.0, 0.0, 1.0, 1.0 ), // magenta
-	vec4( 1.0, 1.0, 1.0, 1.0 ), // white
-	vec4( 0.0, 1.0, 1.0, 1.0 ) // cyan
+	vec4( 1.0, 0.49, 0.31, 1.0 ), // coral
+	vec4( 1.0, 0.27, 0.0, 1.0 ), // orange red
+	vec4( 1.0, 0.84, 0.0, 1.0 ), // gold
+	vec4( 1.0, 0.65, 0.0, 1.0 ), // orange
+	vec4( 1.0, 0.55, 0.0, 1.0 ), // dark orange
 };
+
+vec4 points[MAX_NUM_PARTICLES];
+vec4 colors[MAX_NUM_PARTICLES];
+
+GLuint program;
+GLuint vao;
+mat4 model_view;
+mat4 projection;
+
+GLuint buffer;
+GLuint loc, loc2;
+GLuint model_view_loc, projection_loc;
+
+/* particle struct */
+
+typedef struct particle {
+    vec4 color;
+	float life;
+	float original_life;
+	float size;
+	float original_size;
+    vec4 position;
+    vec4 original_position;
+    vec4 velocity;
+	vec4 original_velocity;
+    float mass;
+} particle;
+
+particle particles[MAX_NUM_PARTICLES];      
+
+int present_time;
+int last_time;
+int num_particles = INITIAL_NUM_PARTICLES;
+float speed = INITIAL_SPEED;
+bool elastic = FALSE;            /* restitution off */
+bool repulsion = FALSE;          /* repulsion off */
+float d2[MAX_NUM_PARTICLES][MAX_NUM_PARTICLES];   /* array for interparticle distances */
+
+// Texture
+int texture;
 
 // Windows
 int mainWin;
 
-
-//--------------------------------------------------------------------------
-
-// quad generates two triangles for each face and assigns colors
-// to the vertices
-int Index = 0;
-void quad( int a, int b, int c, int d )
-{
-	colors[Index] = vertex_colors[a]; 
-	points[Index] = vertices[a];
-	Index++;
-	colors[Index] = vertex_colors[b]; 
-	points[Index] = vertices[b]; 
-	Index++;
-	colors[Index] = vertex_colors[c]; 
-	points[Index] = vertices[c]; 
-	Index++;
-	colors[Index] = vertex_colors[a]; 
-	points[Index] = vertices[a]; 
-	Index++;
-	colors[Index] = vertex_colors[c]; 
-	points[Index] = vertices[c]; 
-	Index++;
-	colors[Index] = vertex_colors[d]; 
-	points[Index] = vertices[d]; 
-	Index++;
-}
 
 //--------------------------------------------------------------------------
 
@@ -131,27 +91,44 @@ void loadBuffer( void )
 
 //--------------------------------------------------------------------------
 
-// generate 12 triangles: 36 vertices and 36 colors
-void colorcube()
+void createParticle( int i )
 {
-	Index = 0;
-	NumVertices = 36;
-	quad( 1, 0, 3, 2 );
-	quad( 2, 3, 7, 6 );
-	quad( 3, 0, 4, 7 );
-	quad( 6, 5, 1, 2 );
-	quad( 4, 5, 6, 7 );
-	quad( 5, 4, 0, 1 );
-} 
+        particles[i].mass = 1.0;
+		int col = i % NUM_COLORS;
+        particles[i].color = vertex_colors[col];
+        for ( int j = 0; j < 3; j++ ) {
+			if(j == 0) {
+            	particles[i].original_position[j] =
+                	( ( float ) rand() / RAND_MAX ) - 0.5;
+            	particles[i].position[j] = particles[i].original_position[j];
+			}
+			if(j == 1 or j == 2) {
+            	particles[i].original_position[j] =
+                	(( ( float ) rand() / RAND_MAX ) / 2.0 ) - 1.3;
+            	particles[i].position[j] = particles[i].original_position[j];
+			}
+            particles[i].original_velocity[j] =
+                speed * 2.0 * ( ( float ) rand() / RAND_MAX ) - 1.0;
+			particles[i].velocity[j] = particles[i].original_velocity[j];
+        }
+        particles[i].position[3] = 1.0;
+		particles[i].original_life = 1.0 * ( ( float ) rand() / RAND_MAX ); 
+		particles[i].life = particles[i].original_life;
+		particles[i].original_size = 8.0;
+		particles[i].size = particles[i].original_size;
 
-//--------------------------------------------------------------------------
+}
 
 void init( )
 {
-	colorcube();
+
+    // Set up particles with random velocities, semi-random positions and colors
+    for ( int i = 0; i < num_particles; i++ ) {
+			createParticle( i );
+    }
 
 	// Initialization
-	GLuint vao, buffer;
+	GLuint vao, buffer, tex;
 
 	// Create a vertex array object
 	glGenVertexArrays( 1, &vao );
@@ -161,11 +138,26 @@ void init( )
     glGenBuffers( 1, &buffer );
     glBindBuffer( GL_ARRAY_BUFFER, buffer );
 
+	// Create and initialize a texture object
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
+	int x, y, comp;
+	unsigned char *my_texels = stbi_load("particle.png", &x, &y, &comp, 4);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, my_texels);
+	glTexEnvi(GL_POINT_SPRITE_ARB,GL_COORD_REPLACE_ARB,GL_TRUE);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+ 	glActiveTexture( GL_TEXTURE0 );
+
+	stbi_image_free( my_texels );
+
 	// Load array into buffer
 	loadBuffer();
 
 	// Load shaders and use the resulting shader program
-	GLuint program = InitShader( "vshdrcube.glsl", "fshdrcube.glsl" );
+	GLuint program = InitShader( "vshdr.glsl", "fshdr.glsl" );
 	glUseProgram( program );
 
 	// set up vertex arrays
@@ -179,14 +171,28 @@ void init( )
 	glVertexAttribPointer( vColor, 4, GL_FLOAT, GL_FALSE, 0,
 						   BUFFER_OFFSET(sizeof(points)) );
 
-	scaleLoc = glGetUniformLocation( program, "scale" );
-	rotateLocX = glGetUniformLocation( program, "rotatex" );
-	rotateLocY = glGetUniformLocation( program, "rotatey" );
-	rotateLocZ = glGetUniformLocation( program, "rotatez" );
-	translateLoc = glGetUniformLocation( program, "translate" );
+	glUniform1i( glGetUniformLocation(program, "texture"), 0 );
 
-	glClearColor( 1.0, 1.0, 1.0, 1.0 );
+	glClearColor( 0.0, 0.0, 0.0, 1.0 );
 
+}
+
+//----------------------------------------------------------------------------
+
+float
+forces( int i, int j )
+{
+    int k;
+    float force = 0.0;
+    if ( repulsion )
+        for ( k = 0; k < num_particles; k++ ) { /* repulsive force */
+            if ( k != i )
+                force +=
+                    0.001 * ( particles[i].position[j] -
+                              particles[k].position[j] ) / ( 0.001 +
+                                                             d2[i][k] );
+        }
+    return ( force );
 }
 
 //----------------------------------------------------------------------------
@@ -195,19 +201,43 @@ void displayMain( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );     // clear the window
 
-	glUniformMatrix4fv( scaleLoc, 1, GL_FALSE, &s[0][0] );
-	glUniformMatrix4fv( rotateLocX, 1, GL_FALSE, &rx[0][0] );
-	glUniformMatrix4fv( rotateLocY, 1, GL_FALSE, &ry[0][0] );
-	glUniformMatrix4fv( rotateLocZ, 1, GL_FALSE, &rz[0][0] );
-	glUniformMatrix4fv( translateLoc, 1, GL_FALSE, &t[0][0] );
+    for ( int i = 0; i < num_particles; i++ ) {
+        colors[i] = particles[i].color;
+        particles[i].position[3] = 1.0;
+        points[i] = particles[i].position;
+    }
 
-	glDrawArrays( GL_TRIANGLES, 0, NumVertices );
+    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(points), points );
+    glBufferSubData( GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors );
 
+    glDrawArrays( GL_POINTS, 0, num_particles );
 	glutSwapBuffers();
 }
 
+//----------------------------------------------------------------------------
+
 void idleMain( void )
 {
+    int i, j;
+    float dt;
+    present_time = glutGet( GLUT_ELAPSED_TIME );
+    dt = 0.03;
+    for ( i = 0; i < num_particles; i++ ) {
+        for ( j = 1; j < 2; j++ ) {
+            particles[i].position[j] += dt * particles[i].velocity[j];
+            particles[i].velocity[j] += dt * forces( i, j ) / particles[i].mass;
+        }
+		particles[i].life -= dt;
+		if(particles[i].life > 0) {
+			float age_ratio = particles[i].life / particles[i].original_life;
+			particles[i].color[3] = age_ratio;
+		}
+		else {
+			createParticle( i );
+		}
+
+    }
+    last_time = present_time;
 	glutPostRedisplay();
 }
 
@@ -216,102 +246,30 @@ void idleMain( void )
 void keyboard( unsigned char key, int x, int y )
 {
     switch ( key ) {
-    case 'q':
-        exit( EXIT_SUCCESS );
-        break;
-    case 'w':
-		if(scaleEnabled)
-			xscale += scaledelta;
-		else if(rotateEnabled)
-			xtheta += thetadelta;
-		else if(translateEnabled)
-			xtranslate += translatedelta;
-        break;
-    case 'e':
-		if(scaleEnabled)
-			yscale += scaledelta;
-		else if(rotateEnabled)
-			ytheta += thetadelta;
-		else if(translateEnabled)
-			ytranslate += translatedelta;
-        break;
-    case 'r':
-		if(scaleEnabled)
-			zscale += scaledelta;
-		else if(rotateEnabled)
-			ztheta += thetadelta;
-		else if(translateEnabled)
-			ztranslate += translatedelta;
-        break;
-    case 'a':
-		if(scaleEnabled)
-			xscale -= scaledelta;
-		else if(rotateEnabled)
-			xtheta -= thetadelta;
-		else if(translateEnabled)
-			xtranslate -= translatedelta;
-        break;
-    case 's':
-		if(scaleEnabled)
-			yscale -= scaledelta;
-		else if(rotateEnabled)
-			ytheta -= thetadelta;
-		else if(translateEnabled)
-			ytranslate -= translatedelta;
-        break;
-    case 'd':
-		if(scaleEnabled)
-			zscale -= scaledelta;
-		else if(rotateEnabled)
-			ztheta -= thetadelta;
-		else if(translateEnabled)
-			ztranslate -= translatedelta;
-        break;
-    case 'z':
-		s = identity();
-		rx = identity();
-		ry = identity();
-		rz = identity();
-		t = identity();
+	    case 'q':
+	        exit( EXIT_SUCCESS );
+	     	break;
+		case 'm':
+			if(num_particles < MAX_NUM_PARTICLES)
+	            num_particles *= 2;
+			break;
+	
+		case 'n':
+			if(num_particles > MIN_NUM_PARTICLES)
+				num_particles /= 2;
+			break;
+	
+		case 'f':
+			speed *= 1.2;
+			break;
+	
+		case 's':
+			speed /= 1.2;
+			break;
+	
+	}
 
-		xscale = 1.0;
-		yscale = 1.0;
-		zscale = 1.0;
-		
-		xrotate = 1.0;
-		yrotate = 1.0;
-		zrotate = 1.0;
-		
-		xtranslate = 0.0;
-		ytranslate = 0.0;
-		ztranslate = 0.0;
-		
-		xtheta = 0.0;
-		ytheta = 0.0;
-		ztheta = 0.0;
-        break;
-    case 'n':
-		if(scaleEnabled)
-			scaledelta -= scaledelta;
-		else if(rotateEnabled)
-			thetadelta -= (M_PI/4);
-		else if(translateEnabled)
-			translatedelta -= translatedelta;
-        break;
-    case 'm':
-		if(scaleEnabled)
-			scaledelta += scaledelta;
-		else if(rotateEnabled)
-			thetadelta += (M_PI/4);
-		else if(translateEnabled)
-			translatedelta += translatedelta;
-        break;
-    }
-	s = Scale( xscale, yscale, zscale );
-	rx = RotateX( xtheta );
-	ry = RotateY( ytheta );
-	rz = RotateZ( ztheta );
-	t = transpose(Translate( xtranslate, ytranslate, ztranslate ));
+	glutPostRedisplay();
 }
 
 //----------------------------------------------------------------------------
@@ -319,67 +277,53 @@ void keyboard( unsigned char key, int x, int y )
 void mainMenu( int id )
 {
 	switch( id ) {
-		case 1:
-			scaleEnabled = true;	
-			rotateEnabled = false;	
-			translateEnabled = false;	
+		case 1: 
+			glutIdleFunc( NULL );
 			break;
 		case 2:
-			scaleEnabled = false;	
-			rotateEnabled = true;	
-			translateEnabled = false;	
-			break;
-		case 3:
-			scaleEnabled = false;	
-			rotateEnabled = false;	
-			translateEnabled = true;	
+			glutIdleFunc( idleMain );
 			break;
 	}
 
 	glutPostRedisplay();
 }
+
 //----------------------------------------------------------------------------
 
 int main( int argc, char **argv )
 {
-	cout << endl;
-	cout << "INSTRUCTIONS FOR KEYS" << endl;
-	cout << "'q' -  quits the program" << endl;
-	cout << endl;
-	cout << "'w' -  transformations in the +x direction" << endl;
-	cout << "'e' -  transformations in the +y direction" << endl;
-	cout << "'r' -  transformations in the +z direction" << endl;
-	cout << "'a' -  transformations in the -x direction" << endl;
-	cout << "'s' -  transformations in the -y direction" << endl;
-	cout << "'d' -  transformations in the -z direction" << endl;
-	cout << "'z' -  resets all transformations" << endl;
-	cout << endl;
-	cout << "'n' -  decreases transformation delta" << endl;
-	cout << "'m' -  increases transformation delta" << endl;
-	cout << endl;
-
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
     glutInitWindowSize( 500, 500 );
 
 	// Main Window
-    mainWin = glutCreateWindow( "COLOR CUBE." );
+    mainWin = glutCreateWindow( "FIRE IN MY ROOM" );
     glewExperimental=GL_TRUE; 
     glewInit(); 
 
-    init();
-
 	glutCreateMenu( mainMenu ); // Set up menu
-	glutAddMenuEntry ( "SCALE", 1 );
-	glutAddMenuEntry( "ROTATE", 2 );
-	glutAddMenuEntry( "TRANSLATE", 3 );
+	glutAddMenuEntry ( "Stop Fire", 1 );
+	glutAddMenuEntry( "Start Fire", 2 );
 	glutAttachMenu( GLUT_RIGHT_BUTTON );
+
+
+    init();
+    glPointSize( particles[0].size );
+
+	cout << "Keys:" << endl;
+    cout <<  "'m'  -  more particles" << endl;
+    cout <<  "'n'  -  fewer particles" << endl;
+    cout <<  "'f'  -  faster particles" << endl;
+    cout <<  "'s'  -  slower particles" << endl;
 
 	glutIdleFunc( idleMain );
     glutDisplayFunc( displayMain );
     glutKeyboardFunc( keyboard );
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	// Run
     glutMainLoop();
     return 0;
