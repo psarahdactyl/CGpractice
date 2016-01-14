@@ -1,0 +1,213 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\newlist{subquestion}{enumerate}{1}
+\setlist[subquestion,1]{label=(\alph*)}
+
+\begin{document}
+
+\title{CS 430 Homework 1}
+\author{Sarah Kushner}
+\date{\today}
+\maketitle
+
+\begin{enumerate}
+
+\item 
+The implicit equation for a 2D line is: \\
+$f(x,y) = ax + yb + c = 0$ \\ \\
+
+Given two points we can calculate the x and y components, $d_x$ and $d_y$. \\
+Then the slope is $\frac{d_y}{d_x}$. \\ \\
+
+Substituting into the implicit equation (for an arbitrary point $(x_0 , y_0)$): \\
+$f(x,y) = d_y x - d_x y + (d_x y_0 - d_y x_0) = 0$
+
+\item 
+Homogeneous matrix for 2D translation: 
+
+\[
+\begin{bmatrix}
+    1  & 0 & d_{x} \\
+    0  & 1 & d_{y} \\
+    0  & 0 & 1
+\end{bmatrix}
+\] where $d_{x}$ and $d_{y}$ are the amount to add to the $x$ and $y$ coordinates.
+
+Homogeneous matrix for 2D scaling: 
+
+\[
+\begin{bmatrix}
+    s_{x}  & 0 		& 0 \\
+    0      & s_{y} 	& 0 \\
+    0  	   & 0 		& 1
+\end{bmatrix}
+\] where $s_{x}$ and $s_{y}$ are the factors to scale by.
+
+\item 
+No, in general matrix multiplication does not commute, especially in the case of transformation matrices like scaling and rotating, which are done with respect to the origin. Very different results occur when they are performed in one order versus another.
+
+\item 
+The world window is the section of the ``world" that will be displayed.
+The image window is the computer screen.
+The viewport is the window inside the image window, the part of the screen that is rendered to (the framebuffer).
+
+\item
+Start with the point $(1, 5)$ because we start with the left-most and $1 < 10$. \\
+m = $\frac{7-5}{10-1} = \frac{2}{9}$ \\
+m $< 1$ \\
+So, $\Delta x = 1$ and $\Delta y = \frac{2}{9}$. \\
+$x_1 = x_0 + \Delta x \rightarrow x_1 = 1 + 1 = 2$ \\
+$y_1 = y_0 + \Delta x \rightarrow y_1 = 5 + \frac{2}{9} = 5\frac{2}{9} = 5$ (rounded) \\
+$x_2 = 2 + 1 = 3$ \\
+$y_2 = 5\frac{2}{9} + \frac{2}{9} = 5\frac{4}{9}$ (floating point) $= 5$ (rounded) \\
+$x_3 = 3 + 1 = 4$ \\
+$y_3 = 5\frac{4}{9} + \frac{2}{9} = 5\frac{6}{9}$ (floating point) $= 6$ (rounded) \\
+$x_4 = 4 + 1 = 5$ \\
+$y_4 = 5\frac{6}{9} + \frac{2}{9} = 5\frac{8}{9}$ (floating point) $= 6$ (rounded) \\
+$x_5 = 5 + 1 = 6$ \\
+$y_5 = 5\frac{8}{9} + \frac{2}{9} = 6\frac{1}{9}$ (floating point) $= 6$ (rounded) \\
+$x_6 = 6 + 1 = 7$ \\
+$y_6 = 6\frac{1}{9} + \frac{2}{9} = 6\frac{3}{9}$ (floating point) $= 6$ (rounded) \\
+$x_7 = 7 + 1 = 8$ \\
+$y_7 = 6\frac{3}{9} + \frac{2}{9} = 6\frac{5}{9}$ (floating point) $= 7$ (rounded) \\
+$x_8 = 8 + 1 = 9$ \\
+$y_8 = 6\frac{5}{9} + \frac{2}{9} = 6\frac{7}{9}$ (floating point) $= 7$ (rounded) \\
+$x_9 = 9 + 1 = 10$ \\
+$y_9 = 6\frac{7}{9} + \frac{2}{9} = 7$ (floating point and rounded)  \\
+Made it to $(10, 7)$.
+
+
+\item
+Start with the point $(1, 5)$ because we start with the left-most and $1 < 10$. \\
+m = $\frac{7-5}{10-1} = \frac{2}{9}$ ($d_y = 2$ and $d_x = 9$) \\
+$0 \leq$ m $\leq 1$ \\
+So, $\Delta x = 1$ and $\Delta y = \frac{1}{2}$. \\
+$D_{0} = 2d_y - d_x = 2(2) - 9 = -5$ \\
+$-5 \leq 0 \rightarrow$ move East \\
+$D_{1} = D_{0} + 2d_y = -5 + 2(2) = -1$ \\
+$-1 \leq 0 \rightarrow$ move East \\
+$D_{2} = D_{1} + 2d_y = -1 + 2(2) = 3$ \\
+$3 > 0 \rightarrow$ move NorthEast \\
+$D_{3} = D_{2} + 2(d_y - d_x) = 3 + 2(2-9) = -11$ \\
+$-11 \leq 0 \rightarrow$ move East \\
+$D_{4} = D_{3} + 2d_y = -11 + 2(2) = -7$ \\
+$-7 \leq 0 \rightarrow$ move East \\
+$D_{5} = D_{4} + 2d_y = -7 + 2(2) = -3$ \\
+$-3 \leq 0 \rightarrow$ move East \\
+$D_{6} = D_{5} + 2d_y = -3 + 2(2) = 1$ \\
+$1 > 0 \rightarrow$ move NorthEast \\
+$D_{7} = D_{6} + 2(d_y - d_x) = 1 + 2(2-9) = -13$ \\
+$-13 \leq 0 \rightarrow$ move East \\
+$D_{8} = D_{7} + 2d_y = -13 + 2(2) = -9$ \\
+$-9 \leq 0 \rightarrow$ move East \\
+Made it to $(10, 7)$.
+
+\item
+$P_0 = (2, 2)$ \\
+$P_1 = (8, 8)$ \\
+$C_0 = (1, 5) \rightarrow 0001$ \\
+$C_1 = (10, 7) \rightarrow 0010$ \\
+$C_0 \vee C_1 = 0011$, so it's not completely inside the window. \\
+$C_0 \wedge C_1 = 0000$, so it's not completely outside the window. \\
+I started with the right-most bit.  \\
+Because it is 1, $x_0 < WL$ and $x_1 \geq WL$ \\
+$1 < 2$ and $10 \geq 2$ \\
+$x_c = WL$ \\
+$x_c = 2$ \\
+$y_c = \frac{WL - x_0}{x_1 - x_0}(y_1 - y_0) + y_0$ \\
+$= \frac{2-1}{10-1}(7-5) + 5$ \\
+$= \frac{2}{9} + 5 = 5\frac{2}{9}$ \\
+New point: $(2, 5\frac{2}{9})$ \\
+New bitcode: $C_0 = 0000$ \\ \\
+Now, $C_0 \vee C_1 = 0010$ \\
+Now I have to fix the third bit. \\
+Because it is 1, $x_1 > WR$ \\
+$x_c = WR$ \\
+$x_c = 8$ \\
+$y_c = \frac{WR - x_1}{x_1 - x_0}(y_1 - y_0) + y_1$ \\
+$= \frac{8-10}{10-1}(7-5) + 7$ \\
+$= \frac{-4}{9} + 7 = 6\frac{5}{9}$ \\
+New point: $(8, 6\frac{5}{9})$ \\
+New bitcode: $C_1 = 0000$  \\ \\
+New endpoints are: \\
+$P_0 = (2, 5\frac{2}{9})$ \\
+$P_1 = (8, 6\frac{5}{9})$ 
+
+\item
+Window edges: \\
+$WT = (0, 8)$, Normal $= (0, 1)$ \\
+$WB = (0, 2)$, Normal $= (0, -1)$ \\
+$WL = (2, 0)$, Normal $= (-1, 0)$ \\
+$WR = (8, 0)$, Normal $= (1, 0)$ \\ \\
+$D = (10, 7) - (1, 5) = (9, 2)$ \\ \\
+LEFT: \\
+$t = \frac{(-1, 0) \cdot ((1, 5) - (2, 0))}{-(-1, 0) \cdot (9, 2)}$
+$ = \frac{1}{9}$ \\
+Because $(-1, 0) \cdot (9, 2) = -9 < 0$, this is PE (potentially entering). \\ \\
+
+RIGHT: \\
+$t = \frac{(1, 0) \cdot ((1, 5) - (8, 0))}{-(1, 0) \cdot (9, 2)}$
+$ = \frac{-7}{-9} = \frac{7}{9}$ \\
+Because $(1, 0) \cdot (9, 2) = 9 > 0$, this is PL (potentially leaving). \\ \\
+
+In the TOP and BOTTOM cases, $t$ turns out to be positive and negative $\frac{3}{2}$, which is greater than and less than 1, respectively. This means that those values of $t$ are past the starting and ending points we are concentrating on. \\ \\
+
+So, plugging in our $t$ values to this: \\
+$P(t)= (1, 5) + t((10, 7) - (1, 5)) = (1, 5) + t(9, 2)$ \\ \\
+$P(\frac{1}{9}) = (1, 5) + \frac{1}{9}(9, 2)$ \\
+$ = (1, 5) + (\frac{9}{9}, \frac{2}{9})$ \\
+$ = (1, 5) + (1, \frac{2}{9}) = (2, 5\frac{2}{9})$ \\
+
+$P(\frac{7}{9}) = (1, 5) + \frac{7}{9}(9, 2)$ \\
+$ = (1, 5) + (\frac{9*7}{9}, \frac{14}{9})$ \\
+$ = (1, 5) + (7, 1\frac{5}{9}) = (8, 6\frac{5}{9})$ \\ \\
+
+New endpoints are: \\
+$P_0 = (2, 5\frac{2}{9})$ \\
+$P_1 = (8, 6\frac{5}{9})$ 
+
+\item
+If the slope m $< -1$, then $\Delta y = -1$ and $\Delta x = \frac{1}{2}.$ \\
+The choices are South and SouthEast. \\
+$S = (p_x, p_y -1)$ \\
+$SE = (p_x -1, p_y -1)$ \\
+But to avoid floating points, we need: \\
+$D = f(p_x+\frac{1}{2}, p_y - 1)$ \\
+Then plug it into the implicit equation of a line (times 2): \\
+$ = 2a(p_x+\frac{1}{2}) + 2b(p_y - 1) + 2c$ \\
+$ = 2ap_x + a + 2bp_y - 2b + 2c$ \\
+$ = 2ap_x + 2bp_y + (a - 2b + 2c)$ \\ 
+If $D < 0, S$ \\
+If $D \geq 0, SE$ \\ \\
+
+Remember: \\
+$a = d_y$ \\ 
+$b = -d_x$ \\
+$c = d_x r_y - d_y r_x$ \\ \\
+
+$D_{init} = f(r_x + \frac{1}{2}, r_y - 1)$ \\
+$2a(r_x + \frac{1}{2}) + 2b(r_y - 1) + 2c$ \\
+$ = 2d_y (r_x + \frac{1}{2}) - 2d_x(p_y - 1) + 2(d_x r_y - d_y r_x)$ \\
+$ = 2d_y r_x + d_y - 2d_x r_y + 2d_x + 2d_x r_y - 2d_y r_x$ \\
+$ = 2d_x + d_y$ \\ \\
+
+If we just went S: \\
+$D_{new} = f(r_x + \frac{1}{2}, r_y - 2)$ \\
+$2a(r_x + \frac{1}{2}) + 2b(r_y - 2) + 2c$ \\
+$ = 2d_y (r_x + \frac{1}{2}) - 2d_x(p_y - 2) + 2(d_x r_y - d_y r_x)$ \\
+$ = 2d_y r_x + d_y - 2d_x r_y + (2d_x + 2d_x) + 2d_x r_y - 2d_y r_x$ \\
+$ = 2d_x + 2d_x + d_y$ \\
+$ = D + 2d_x$ \\ \\
+
+If we just went SE: \\
+$D_{new} = f(r_x + 1\frac{1}{2}, r_y - 2)$ \\
+$2a(r_x + 1\frac{1}{2}) + 2b(r_y - 2) + 2c$ \\
+$ = 2d_y (r_x + 1\frac{1}{2}) - 2d_x(p_y - 2) + 2(d_x r_y - d_y r_x)$ \\
+$ = 2d_y r_x + (d_y + 2d_y) - 2d_x r_y + (2d_x + 2d_x) + 2d_x r_y - 2d_y r_x$ \\
+$ = (2d_x + d_y) + (2d_x + 2d_y)$ \\ 
+$ = D + 2(d_y + d_x)$ \\ \\
+
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,35 @@
+Sarah Kushner
+CS 430
+HW 5
+
+i. Features
+	All the ones required in the assignment PDF: 
+		-reading in an SMF file and creating polygons
+		-transformations to canonical view volume
+		-clipping 3D lines with modified Cohen-Sutherland
+		-depth cuing and z buffering
+		-perspective and parallel projection from 3D to 2D
+		-viewport mapping
+		-drawing lines
+		-filling
+		-exporting an XPM file
+
+ii. Language and OS
+	C++
+	Ubuntu 14.04
+
+iii. Compiler
+	g++-4.8, 4.8.4-2ubuntu1~14.04, GNU C++ compiler
+	The makefile uses the flag for C++11.
+
+iv. Name of file with main()
+	CG_hw4.cpp
+	
+v. How to Compile and Run
+	type "make run":
+		which builds the executable and runs every sample run in the homework PDF.
+
+	or type "make" to build then run:
+	"./CG_hw5 <insert commandline arguments>"
+
+	"make clean" deletes all .xpm files and the executable.

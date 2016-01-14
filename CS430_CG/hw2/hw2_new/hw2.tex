@@ -1,0 +1,270 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\newlist{subquestion}{enumerate}{1}
+\setlist[subquestion,1]{label=(\alph*)}
+\setlength{\parindent}{4cm}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{CS 430 Homework 2}
+\author{Sarah Kushner}
+\date{\today}
+\maketitle
+
+\begin{enumerate}
+
+\item 
+\textbf{Even-odd Algorithm} \\
+
+Citation: \url{http://idav.ucdavis.edu/~okreylos/TAship/Spring2000/PointInPolygon.html} \\
+I am sending rays in the positive x-direction only. \\
+R1 containing all the points $(p_x, p_y)$ such that $p_y < P_y$ \\ 
+R2 containing all the points $(p_x, p_y)$ such that $p_y >= P_y$ \\
+
+$P = (2,3)$ \\
+$Ray = (2,3) \rightarrow (5,3)$ \\
+
+\texttt{Edge 1} = $(1,2) (p1) \rightarrow (4,2) (p2)$ \\
+
+Number of intersections = 0 \\
+
+If $p1_y < P_y$ and $p2_y < P_y$, do nothing (both points are in region R1). \\
+Because 2 $<$ 3 and 2 $<$ 3, both points are in R1. \\
+
+
+\rule{\textwidth}{1pt}
+
+\texttt{Edge 2} = $(4,2) \rightarrow (2,4)$ \\
+
+If $p1_y < P_y$ and $p2_y < P_y$, do nothing (both points are in region R1). \\
+Because 2 $<$ 3 and 4 $>$ 3, the points are not both in R1. \\
+If $p1_y >= P_y$ and $p2_y >= P_y$, do nothing (both points are in region R2). \\
+Because 2 $<$ 3 and 4 $>=$ 3, both points are not in R2. \\
+
+Find intersection point: \\
+	$x_0 = 4$ \\
+	$y_0 = 2$ \\ 
+
+	$P(t) = P_0 + t_0(P_1 - P_0)$ \\
+	$P(t) = (4,2) + t_0((2,4) - (4,2))$ \\
+	$P(t) = (4,2) + t_0((-2,2))$ \\ 	
+	$P(t) = P_2 + t_2(P_3 - P_2)$ \\
+	$P(t) = (2,3) + t_2((5,3) - (2,3))$ \\
+	$P(t) = (2,3) + t_2(3,0)$ \\ 
+	
+	$x_2 = 2$ \\
+	$y_2 = 3$ \\
+	
+	$D_0 = P_1 - P_0$ \\
+	$D_0 = (2,4) - (4,2) = (-2,2)$ \\ 
+	
+	$D_2 = P_3 - P_2$ \\
+	$D_2 = (2,5) - (2,3) = (3,0)$ \\ 
+		
+	$t_0 = \frac{(x_0 - x_2)D_{y2} + (y_2 - y_0)D_{x2}}{D_{y0}D_{x2} - D_{x0}D_{y2}}$ \\ 
+	$t_0 = \frac{(4 - 2)0 + (3 - 2)3}{2*3 - (-2*0)} = \frac{3}{6} = \frac{1}{2} \geq 0$  \\ 
+	
+	$t_2 = \frac{(x_2 - x_0)D_{y0} + (y_0 - y_2)D_{x0}}{D_{y2}D_{x0} - D_{x2}D_{y0}}$ \\ 
+	$t_2 = \frac{(2 - 4)2 + (2 - 3)-2}{0*-2 - 3*-2} = \frac{-2}{6} = \frac{-1}{3} \leq 1$ \\ 
+	
+	Intersection point:
+	$P_i = P_0 + t_0(P_1 - P_0)$ \\
+	$P_i = (4,2) + \frac{1}{2}((2,4) - (4,2)) = (4,2) + (-1,1) = (3,3)$ \\
+	\pagebreak
+
+\rule{\textwidth}{1pt}
+\texttt{Edge 3} = $(2,4) \rightarrow (1,2)$ \\
+
+If $p1_x <= P_x$ and $p2_x <= P_x$, do nothing (both points are to the left of the point in question). \\
+Because 2 $<=$ 2 and 1 $<=$ 2, this edge is to the left of the point. \\
+
+Number of intersections = 1 \\
+This is an odd number, so the point $P$ is inside the polygon. 
+
+\rule{\textwidth}{1pt}
+
+\item 
+
+\textbf{Sutherland-Hodgman Polygon Clipping} \\
+Input: $<$(-1,-5) , (5,5), (2,7)$>$ \\
+Output: $<$ $>$ \\
+
+\texttt{Edge 1 (left edge)}: (0,0) $\rightarrow$ (0,10) \\
+First vertex is outside, so don't add to output. \\
+$v_{1}$ = (-1,-5), $v_{2}$ = (5,5) $\rightarrow$ outside-inside \\
+Find intersection point:  \\
+	$x_0 = -1$ \\
+	$y_0 = -5$ \\ 
+
+	$P(t) = P_0 + t_0(P_1 - P_0)$ \\
+	$P(t) = (-1,-5) + t_0((5,5) - (-1,-5))$ \\
+	$P(t) = (-1,-5) + t_0((6,10))$ \\ 	
+	$P(t) = P_2 + t_2(P_3 - P_2)$ \\
+	$P(t) = (0,0) + t_2((0,10) - (0,0))$ \\
+	$P(t) = (0,0) + t_2((0,10))$ \\ 
+	
+	$x_2 = 0$ \\
+	$y_2 = 10$ \\
+	
+	$D_0 = P_1 - P_0$ \\
+	$D_0 = (5,5) - (-1,-5) = (6,10)$ \\ 
+	
+	$D_2 = P_3 - P_2$ \\
+	$D_2 = (0,10) - (0,0) = (0,10)$ \\ 
+		
+	$t_0 = \frac{(x_0 - x_2)D_{y2} + (y_2 - y_0)D_{x2}}{D_{y0}D_{x2} - D_{x0}D_{y2}}$ \\ 
+	$t_0 = \frac{(-1 - 0)10 + (10 - -5)0}{10 * 0 - 6*10} = \frac{-10}{-60} = \frac{1}{6} \geq 0$  \\ 
+	
+	$t_2 = \frac{(x_2 - x_0)D_{y0} + (y_0 - y_2)D_{x0}}{D_{y2}D_{x0} - D_{x2}D_{y0}}$ \\ 
+	$t_2 = \frac{(0 - -1)10 + (-5 - 10)6}{10*6 - 0*10} = \frac{-100}{60} = \frac{-10}{6} \leq 1$ \\ 
+	
+	Intersection point:
+	$P_i = P_0 + t_0(P_1 - P_0)$ \\
+	$P_i = (-1,-5) + \frac{1}{6}((5,5) - (-1,-5)) = (-1,-5) + (\frac{6}{6},\frac{10}{6}) = (0,\frac{-20}{6}) = (0,-3.33)$ \\
+	
+Output: $<(0,-3.33), (5,5)>$ \\
+
+$v_{2}$ = (5,5), $v_{3}$ = (2,7) $\rightarrow$ inside-inside \\
+Output: $<(0,-3.33), (5,5), (2,7)>$ \\
+
+$v_{3}$ = (2,7), $v_{1}$ = (-1,-5) $\rightarrow$ inside-outside \\
+Find intersection point:  \\
+	$x_0 = 2$ \\
+	$y_0 = 7$ \\ 
+
+	$P(t) = P_0 + t_0(P_1 - P_0)$ \\
+	$P(t) = (2,7) + t_0((-1,-5) - (2,7))$ \\
+	$P(t) = (2,7) + t_0((-3,-12))$ \\ 
+	$P(t) = P_2 + t_2(P_3 - P_2)$ \\
+	$P(t) = (0,0) + t_2((0,10) - (0,0))$ \\
+	$P(t) = (0,0) + t_2((0,10))$ \\ 
+	
+	$x_2 = 0$ \\
+	$y_2 = 10$ \\ 
+	
+	$D_0 = P_1 - P_0$ \\
+	$D_0 = (-1,-5) - (2,7) = (-3,-12)$ \\
+	
+	$D_2 = P_3 - P_2$ \\
+	$D_2 = (0,10) - (0,0) = (0,10)$ \\ 
+		
+	$t_0 = \frac{(x_0 - x_2)D_{y2} + (y_2 - y_0)D_{x2}}{D_{y0}D_{x2} - D_{x0}D_{y2}}$ \\ 
+	$t_0 = \frac{(2 - 0)10 + (10 - 7)0}{-12 * 0 - (-3*10)} = \frac{20}{30} = \frac{2}{3} \geq 0$  \\ 
+	
+	$t_2 = \frac{(x_2 - x_0)D_{y0} + (y_0 - y_2)D_{x0}}{D_{y2}D_{x0} - D_{x2}D_{y0}}$ \\ 
+	$t_2 = \frac{(0 - 2)-12 + (7 - 10)-3}{10*-3 - 0*-12} = \frac{33}{-30} = \frac{-11}{10} \leq 1$ \\ 
+	
+	Intersection point:
+	$P_i = P_0 + t_0(P_1 - P_0)$ \\
+	$P_i = (2,7) + \frac{2}{3}((-1,-5) - (2,7)) = (2,7) + (\frac{-6}{3},\frac{-24}{3}) = (0,-1)$ \\
+
+Output: $<(0,-3.33, (5,5), (2,7), (0,-1)>$ \\ 
+\rule{\textwidth}{1pt}
+
+\texttt{Edge 2 (right edge)}: (10,10) $\rightarrow$ (10,0) \\
+Input: $<(0,-3.33), (5,5), (2,7), (0,-1)>$ \\
+First vertex is inside. \\
+$v_{1}$ = (0,-3.33), $v_{2}$ = (5,5) $\rightarrow$ inside-inside \\
+$v_{2}$ = (5,5), $v_{3}$ = (2,7) $\rightarrow$ inside-inside \\
+$v_{3}$ = (2,7), $v_{1}$ = (0,-1) $\rightarrow$ inside-inside \\ 
+Output: $<(0,-3.33, (5,5), (2,7), (0,-1)>$ \\ 
+
+\rule{\textwidth}{1pt}
+
+\texttt{Edge 3 (top edge)}: (0,10) $\rightarrow$ (10,10) \\
+Input: $<(0,-3.33), (5,5), (2,7), (0,-1)>$ \\
+First vertex is inside. \\
+$v_{1}$ = (0,-3.33), $v_{2}$ = (5,5) $\rightarrow$ inside-inside \\
+$v_{2}$ = (5,5), $v_{3}$ = (2,7) $\rightarrow$ inside-inside \\
+$v_{3}$ = (2,7), $v_{1}$ = (0,-1) $\rightarrow$ inside-inside \\ 
+Output: $<(0,-3.33, (5,5), (2,7), (0,-1)>$ \\ 
+
+\rule{\textwidth}{1pt}
+
+\texttt{Edge 4 (bottom edge)}: (10,0) $\rightarrow$ (0,0) \\
+Input: $<(0,-3.33), (5,5), (2,7), (0,-1)>$ \\
+First vertex is outside, so don't add to output. \\
+$v_{1}$ = (0,-3.33), $v_{2}$ = (5,5) $\rightarrow$ outside-inside \\
+Find intersection point:  \\
+	$x_0 = 0$ \\
+	$y_0 = -3.33$ \\ 
+	
+	$x_2 = 0$ \\
+	$y_2 = 0$ \\ 
+
+	$D_0 = (0,-3.33) - (5,5) = (-5,-8.33)$ \\ 
+	$D_2 = (10,0) - (0,0) = (10,0)$ \\ 
+	
+	$t_0 = 0.8125 \geq 0$ \\
+	
+	Intersection point:
+	$P_i = (1.875,0)$ \\
+	
+Output: $<(1.875,0), (5,5)>$ \\
+
+$v_{2}$ = (5,5), $v_{3}$ = (2,7) $\rightarrow$ inside-inside \\
+Output : $<(1.875,0), (5,5), (2,7)>$
+
+$v_{3}$ = (2,7), $v_{1}$ = (0,-1) $\rightarrow$ inside-outside \\ 
+Find intersection point:  \\
+	$x_0 = 2$ \\
+	$y_0 = 7$ \\ 
+	
+	$x_2 = 0$ \\
+	$y_2 = 0$ \\ 
+
+	$D_0 = (2,7) - (0,-1) = (2,8)$ \\ 
+	$D_2 = (10,0) - (0,0) = (10,0)$ \\ 
+	
+	$t_0 = 0.975 \geq 0$ \\
+	
+	Intersection point:
+	$P_i = (0.25,0)$ \\
+	
+	Output (\textbf{final vertices}): $<(1.875,0), (5,5), (2,7), (0.25,0)>$ \\
+\rule{\textwidth}{1pt}
+\item 
+
+\textbf{Polygon Filling} \\
+
+\begin{itemize}
+
+\item
+
+
+
+\texttt{Extrema points for scan-line 6}: 4, 11
+
+
+\item
+
+Scan-line 6 will draw as it goes from x=0 to x=13. When the parity bit is 0, it does not draw; when it's 1, it does. When it hits an extrema point, the bit will flip. From x=0, 2, 3 \ldots , 13 scan-line 6 will draw according to the parity bit's value. \\
+
+\begin{tabular}{ l | cr }
+  x & Parity bit \\ \hline
+  0 & 0  \\
+  1 & 0  \\
+  2 & 0  \\
+  3 & 0  \\
+  4 & 1  \\
+  5 & 1  \\
+  6 & 1  \\
+  7 & 1  \\
+  8 & 1  \\
+  9 & 1  \\
+  10 & 1  \\
+  11 & 1  \\
+  12 & 0  \\
+  13 & 0  \\
+\end{tabular}
+
+
+\end{itemize}
+
+
+
+\end{enumerate}
+
+\end{document}

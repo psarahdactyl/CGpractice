@@ -1,0 +1,26 @@
+Sarah Kushner
+CS 430
+HW 2
+
+i. Features
+	All the ones required in the assignment PDF: 
+		-reading in a PS file
+		-transformations: 2D rotation, translation, and scaling
+		-clipping lines with Cohen-Sutherland
+		-drawing lines
+		-exporting an XPM file
+
+ii. Language and OS
+	C++
+	Ubuntu 14.04
+
+iii. Compiler
+	g++-4.8, 4.8.4-2ubuntu1~14.04, GNU C++ compiler
+
+iv. Name of file with main()
+	CG_hw2.cpp
+	
+v. How to Compile and Run
+	type "make run"
+	or type "make" to build then run:
+	"./CG_hw2 <insert commandline arguments>"
