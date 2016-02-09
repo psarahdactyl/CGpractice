@@ -4,7 +4,7 @@ OPTIONS=$(GCC_OPTIONS) $(GL_OPTIONS)
 
 
 .cpp: 
-	g++ $@.cpp $(OPTIONS) -o $@  
+	g++ $@.cpp Common/InitShader.cpp $(OPTIONS) -o $@  
 
 run: honors
 	./honors

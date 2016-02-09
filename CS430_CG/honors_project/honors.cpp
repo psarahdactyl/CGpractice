@@ -59,12 +59,15 @@ vec2* deCasteljau(int r, int i, double t)
 void createCurve(vec2* points, int pointsSize)
 {
 	vec2* tmp;
-	for (double t = 0; t <= 1; t += 0.01) 
+	for (double t = 0; t < 1; t += 0.01) 
 	{
 		tmp = deCasteljau(pointsSize-1, 0, t);
 		linePoints.push_back( vec2(tmp->x, tmp->y) );
 		linesSize++;
 	}
+    tmp = deCasteljau(pointsSize-1, 0, 1);
+    linePoints.push_back( vec2(tmp->x, tmp->y) );
+    linesSize++;
 
 }
 
@@ -81,7 +84,7 @@ void loadBuffer( void )
 	glBufferSubData( GL_ARRAY_BUFFER, 0,
 							  sizeof(vec2)*pointsSize, points );
 
-	glBufferSubData( GL_ARRAY_BUFFER, sizeof(*points)*pointsSize,
+	glBufferSubData( GL_ARRAY_BUFFER, sizeof(vec2)*pointsSize,
 							   sizeof(vec2)*linesSize, lines );
 
 }
