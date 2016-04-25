@@ -1,0 +1,22 @@
+Sarah Kushner
+CS 431
+HW 1
+
+i. Language and OS
+	C++
+	Debian Jessie
+
+iii. Compiler
+	g++-4.8, 4.8.4-2ubuntu1~14.04, GNU C++ compiler
+	The makefile uses the flag for C++11.
+
+iv. Name of file with main()
+	sak338_hw1.cpp
+	
+v. How to Compile and Run
+	type "make run":
+		which builds the executable and generates a png.
+
+	"make clean" deletes the executable.
+
+    NOTE: makefile only generates two spheres to save time.
