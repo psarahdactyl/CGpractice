@@ -4,7 +4,7 @@ OPTIONS=$(GCC_OPTIONS) $(GL_OPTIONS)
 
 
 .cpp: 
-	g++ $@.cpp -w Common/InitShader.o $(OPTIONS) -o $@  
+	g++ $@.cpp -w Common/InitShader.cpp $(OPTIONS) -o $@  
 
 run: hw8
 	./hw8

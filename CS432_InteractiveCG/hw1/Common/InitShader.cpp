@@ -1,5 +1,6 @@
 
 #include "Angel.h"
+#include <stdio.h>
 
 namespace Angel {
 
